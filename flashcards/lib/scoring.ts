@@ -46,9 +46,11 @@ export function scoreMcq(
 export const scoreReading = scoreMcq;
 
 export function normalizeWriting(value: string): string {
-  return normalizeText(value)
-    .replace(/[.!¡?¿]+$/g, "")
-    .replace(/\s+/g, " ");
+  return value
+    .toLowerCase()
+    .replace(/[.,;:!?¡¿"'“”‘’()[\]]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 export function scoreWriting(

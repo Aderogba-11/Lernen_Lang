@@ -3,6 +3,7 @@ import type { ActionResult } from "@/lib/enrollments";
 import { isRating, RATINGS, type Rating } from "@/lib/ratings";
 import {
   scoreMcq,
+  scoreWriting,
   type ReadingQuestion,
   type ReadingScore,
 } from "@/lib/scoring";
@@ -35,6 +36,13 @@ export type SessionListening = {
   questions: { prompt: string; options: string[] }[];
 };
 
+export type SessionWriting = {
+  id: string;
+  prompt: string;
+  kind: string;
+  display: string;
+};
+
 export type LessonSession = {
   lessonId: string;
   lessonTitle: string;
@@ -46,6 +54,7 @@ export type LessonSession = {
   courseTitle: string;
   languageCode: string;
   cards: SessionCard[];
+  writings: SessionWriting[];
   reading: SessionReading | null;
   listening: SessionListening | null;
   completed: boolean;
@@ -120,7 +129,7 @@ export async function getSessionContent(
     return lesson;
   }
 
-  const [cards, readings, listenings, progress] = await Promise.all([
+  const [cards, writings, readings, listenings, progress] = await Promise.all([
     db.flashcard.findMany({
       where: { lessonId: lesson.id, status: "PUBLISHED" },
       orderBy: { order: "asc" },
@@ -134,6 +143,10 @@ export async function getSessionContent(
         partOfSpeech: true,
         audioUrl: true,
       },
+    }),
+    db.exercise.findMany({
+      where: { lessonId: lesson.id, status: "PUBLISHED", type: "WRITING" },
+      orderBy: { order: "asc" },
     }),
     db.exercise.findMany({
       where: { lessonId: lesson.id, status: "PUBLISHED", type: "READING" },
@@ -199,6 +212,39 @@ export async function getSessionContent(
     }
   }
 
+  const writingsClient: SessionWriting[] = [];
+  for (const exercise of writings) {
+    const content = exercise.content as {
+      kind?: string;
+      source?: string;
+      sentence?: string;
+      hint?: string;
+      words?: string[];
+    };
+    let display: string | null = null;
+    if (content?.kind === "translation" && typeof content.source === "string") {
+      display = content.source;
+    } else if (
+      content?.kind === "fill-blank" &&
+      typeof content.sentence === "string"
+    ) {
+      display = `${content.sentence} (${content.hint ?? ""})`;
+    } else if (
+      content?.kind === "word-order" &&
+      Array.isArray(content.words)
+    ) {
+      display = content.words.join(" / ");
+    }
+    if (display && content.kind) {
+      writingsClient.push({
+        id: exercise.id,
+        prompt: exercise.prompt,
+        kind: content.kind,
+        display,
+      });
+    }
+  }
+
   return {
     lessonId: lesson.id,
     lessonTitle: lesson.title,
@@ -210,6 +256,7 @@ export async function getSessionContent(
     courseTitle: lesson.module.course.title,
     languageCode: lesson.module.course.language.code,
     cards,
+    writings: writingsClient,
     reading,
     listening,
     completed: progress?.status === "COMPLETED",
@@ -251,6 +298,46 @@ export async function scoreLessonReading(
   }
 
   return { ok: true, ...scored };
+}
+
+export async function scoreLessonWriting(
+  userId: string,
+  lessonId: string,
+  exerciseId: string,
+  response: string,
+): Promise<
+  | { ok: true; correct: boolean; expected: string }
+  | { ok: false; error: string }
+> {
+  const lesson = await loadAccessibleLesson(userId, lessonId);
+  if ("error" in lesson) {
+    return { ok: false, error: lesson.error };
+  }
+
+  const exercise = await db.exercise.findUnique({ where: { id: exerciseId } });
+  if (
+    !exercise ||
+    exercise.lessonId !== lesson.id ||
+    exercise.status !== "PUBLISHED" ||
+    exercise.type !== "WRITING"
+  ) {
+    return { ok: false, error: "Writing exercise not found." };
+  }
+
+  const answer = exercise.answer as {
+    expected?: string;
+    accept?: string[];
+  } | null;
+  if (!answer || typeof answer.expected !== "string") {
+    return { ok: false, error: "Malformed writing answer." };
+  }
+
+  if (!response.trim()) {
+    return { ok: false, error: "Please write an answer." };
+  }
+
+  const correct = scoreWriting(answer.expected, answer.accept ?? [], response);
+  return { ok: true, correct, expected: answer.expected };
 }
 
 export async function scoreLessonListening(

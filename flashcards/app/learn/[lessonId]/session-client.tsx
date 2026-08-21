@@ -16,9 +16,15 @@ import {
   rateFlashcardAction,
   scoreListeningAction,
   scoreReadingAction,
+  scoreWritingAction,
 } from "./actions";
 import { RATINGS, type Rating } from "@/lib/ratings";
-import type { LessonSession, SessionListening, SessionReading } from "@/lib/sessions";
+import type {
+  LessonSession,
+  SessionListening,
+  SessionReading,
+  SessionWriting,
+} from "@/lib/sessions";
 import type { ReadingScore } from "@/lib/scoring";
 
 const RATING_LABELS: Record<Rating, string> = {
@@ -124,7 +130,8 @@ function speakFallback(text: string) {
 export function SessionClient({ session }: { session: LessonSession }) {
   const [index, setIndex] = useState(0);
   const [revealed, setRevealed] = useState(false);
-  const [phase, setPhase] = useState<"cards" | "reading" | "listening">("cards");
+  const [phase, setPhase] = useState<"cards" | "writing" | "reading" | "listening">("cards");
+  const [writingIndex, setWritingIndex] = useState(0);
   const [counts, setCounts] = useState<Record<Rating, number>>({
     AGAIN: 0,
     HARD: 0,
@@ -143,6 +150,7 @@ export function SessionClient({ session }: { session: LessonSession }) {
   }, [counts, total]);
 
   function nextPhaseAfterCards() {
+    if (session.writings.length > 0) return "writing" as const;
     if (session.reading) return "reading" as const;
     if (session.listening) return "listening" as const;
     return null;
@@ -182,6 +190,23 @@ export function SessionClient({ session }: { session: LessonSession }) {
       } else {
         setIndex((prev) => prev + 1);
         setRevealed(false);
+      }
+    });
+  }
+
+  function handleWritingDone() {
+    startTransition(async () => {
+      if (writingIndex < session.writings.length - 1) {
+        setWritingIndex((prev) => prev + 1);
+        return;
+      }
+      if (session.reading) {
+        setPhase("reading");
+      } else if (session.listening) {
+        setPhase("listening");
+      } else {
+        await completeLessonAction(session.lessonId);
+        setFinished(true);
       }
     });
   }
@@ -237,6 +262,7 @@ export function SessionClient({ session }: { session: LessonSession }) {
                 setIndex(0);
                 setRevealed(false);
                 setPhase("cards");
+                setWritingIndex(0);
                 setCounts({ AGAIN: 0, HARD: 0, GOOD: 0, EASY: 0 });
                 setFinished(false);
               }}
@@ -246,6 +272,19 @@ export function SessionClient({ session }: { session: LessonSession }) {
           </div>
         </CardContent>
       </Card>
+    );
+  }
+
+  if (phase === "writing" && session.writings[writingIndex]) {
+    return (
+      <WritingStep
+        lessonId={session.lessonId}
+        writing={session.writings[writingIndex]}
+        stepNumber={writingIndex + 1}
+        stepTotal={session.writings.length}
+        pending={pending}
+        onDone={handleWritingDone}
+      />
     );
   }
 
@@ -341,6 +380,92 @@ export function SessionClient({ session }: { session: LessonSession }) {
         ) : (
           <Button className="w-full" onClick={() => setRevealed(true)}>
             Reveal answer
+          </Button>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function WritingStep({
+  lessonId,
+  writing,
+  stepNumber,
+  stepTotal,
+  pending,
+  onDone,
+}: {
+  lessonId: string;
+  writing: SessionWriting;
+  stepNumber: number;
+  stepTotal: number;
+  pending: boolean;
+  onDone: () => void;
+}) {
+  const [value, setValue] = useState("");
+  const [result, setResult] = useState<{ correct: boolean; expected: string } | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, startSubmit] = useTransition();
+
+  function handleSubmit() {
+    if (!value.trim() || submitting || result) return;
+    setError(null);
+    startSubmit(async () => {
+      const scored = await scoreWritingAction(lessonId, writing.id, value);
+      if (scored.ok) {
+        setResult(scored);
+      } else {
+        setError(scored.error);
+      }
+    });
+  }
+
+  return (
+    <Card className="w-full max-w-2xl">
+      <CardHeader>
+        <CardDescription>
+          Writing {stepNumber} / {stepTotal}
+        </CardDescription>
+        <CardTitle>{writing.prompt}</CardTitle>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-5">
+        <p className="rounded-lg border border-zinc-200 p-4 text-base dark:border-zinc-800">
+          {writing.display}
+        </p>
+
+        <textarea
+          className="min-h-20 w-full rounded-md border border-zinc-300 bg-transparent p-3 text-base outline-none focus:border-zinc-900 dark:border-zinc-700 dark:focus:border-zinc-100"
+          placeholder="Type your answer…"
+          value={value}
+          disabled={!!result || submitting}
+          onChange={(e) => setValue(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              handleSubmit();
+            }
+          }}
+        />
+
+        {error && <p className="text-sm text-red-600">{error}</p>}
+
+        {result ? (
+          <div className="flex flex-col gap-3">
+            <p className={`text-sm font-medium ${result.correct ? "text-green-600" : "text-red-600"}`}>
+              {result.correct ? "Correct!" : "Not quite."}
+            </p>
+            {!result.correct && (
+              <p className="rounded-md border border-zinc-200 p-3 text-sm dark:border-zinc-800">
+                Expected answer: <span className="font-medium">{result.expected}</span>
+              </p>
+            )}
+            <Button onClick={onDone} disabled={pending}>
+              Continue
+            </Button>
+          </div>
+        ) : (
+          <Button onClick={handleSubmit} disabled={!value.trim() || submitting}>
+            Check answer
           </Button>
         )}
       </CardContent>
