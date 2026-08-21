@@ -1,0 +1,238 @@
+// Lernen Lang — core data model (Phase 0, LL-002..LL-013)
+// Hierarchy: Language -> Level -> Course -> Module -> Lesson -> Exercise / Flashcard
+// NOTE: SQLite does not support Prisma enums. Status/type/rating fields are String,
+// constrained in application code via Zod schemas (see lib/*.ts as they are added).
+
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// ---------------------------------------------------------------------------
+// Authentication (Better Auth 1.7 — matches @better-auth/core get-tables.ts)
+// ---------------------------------------------------------------------------
+
+model User {
+  id            String    @id
+  name          String
+  email         String    @unique
+  emailVerified Boolean   @default(false)
+  image         String?
+  createdAt     DateTime
+  updatedAt     DateTime
+
+  sessions          Session[]
+  accounts          Account[]
+  languages         UserLanguage[]
+  lessonProgress    UserProgress[]
+  flashcardProgress FlashcardProgress[]
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime
+  updatedAt DateTime
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Account {
+  id                    String    @id
+  issuer                String
+  accountId             String
+  providerId            String
+  userId                String
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime
+  updatedAt             DateTime
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@unique([issuer, accountId])
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime
+  updatedAt  DateTime
+
+  @@index([identifier])
+}
+
+// ---------------------------------------------------------------------------
+// Catalog (LL-004, LL-005, LL-006)
+// ---------------------------------------------------------------------------
+
+model Language {
+  id         String  @id @default(cuid())
+  code       String  @unique
+  name       String
+  nativeName String
+  isActive   Boolean @default(true)
+
+  courses   Course[]
+  learners  UserLanguage[]
+}
+
+model Level {
+  id    String @id @default(cuid())
+  code  String @unique
+  name  String
+  order Int    @unique
+
+  courses Course[]
+}
+
+model Course {
+  id          String @id @default(cuid())
+  languageId  String
+  levelId     String
+  title       String
+  description String?
+  status      String @default("DRAFT")
+
+  language Language       @relation(fields: [languageId], references: [id])
+  level    Level          @relation(fields: [levelId], references: [id])
+  modules  Module[]
+  learners UserLanguage[]
+
+  @@unique([languageId, levelId])
+}
+
+// ---------------------------------------------------------------------------
+// Curriculum (LL-007, LL-008, LL-009, LL-010)
+// ---------------------------------------------------------------------------
+
+model Module {
+  id          String  @id @default(cuid())
+  courseId    String
+  title       String
+  description String?
+  order       Int
+
+  course  Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lessons Lesson[]
+
+  @@unique([courseId, order])
+}
+
+model Lesson {
+  id        String  @id @default(cuid())
+  moduleId  String
+  title     String
+  objective String?
+  notes     String?
+  order     Int
+  status    String  @default("DRAFT")
+
+  module     Module           @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  exercises  Exercise[]
+  flashcards Flashcard[]
+  progress   UserProgress[]
+
+  @@unique([moduleId, order])
+}
+
+model Exercise {
+  id       String  @id @default(cuid())
+  lessonId String
+  type     String
+  prompt   String
+  content  Json?
+  answer   Json?
+  order    Int
+  status   String  @default("DRAFT")
+
+  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@unique([lessonId, order])
+}
+
+model Flashcard {
+  id                 String  @id @default(cuid())
+  lessonId           String
+  targetText         String
+  translation        String
+  pronunciation      String?
+  exampleSentence    String?
+  exampleTranslation String?
+  partOfSpeech       String?
+  audioUrl           String?
+  imageUrl           String?
+  difficulty         Int?
+  topic              String?
+  order              Int
+  status             String  @default("DRAFT")
+
+  lesson   Lesson              @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  progress FlashcardProgress[]
+
+  @@unique([lessonId, order])
+  @@unique([lessonId, targetText])
+}
+
+// ---------------------------------------------------------------------------
+// Learner data (LL-011, LL-012, LL-013)
+// ---------------------------------------------------------------------------
+
+model UserLanguage {
+  id         String   @id @default(cuid())
+  userId     String
+  languageId String
+  courseId   String?
+  isActive   Boolean  @default(false)
+  startedAt  DateTime @default(now())
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  language Language @relation(fields: [languageId], references: [id])
+  course   Course?  @relation(fields: [courseId], references: [id])
+
+  @@unique([userId, languageId])
+}
+
+model UserProgress {
+  id          String    @id @default(cuid())
+  userId      String
+  lessonId    String
+  status      String    @default("NOT_STARTED")
+  completedAt DateTime?
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, lessonId])
+}
+
+model FlashcardProgress {
+  id             String    @id @default(cuid())
+  userId         String
+  flashcardId    String
+  lastRating     String?
+  reviewCount    Int       @default(0)
+  lastReviewedAt DateTime?
+  dueAt          DateTime?
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  flashcard Flashcard @relation(fields: [flashcardId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, flashcardId])
+}
