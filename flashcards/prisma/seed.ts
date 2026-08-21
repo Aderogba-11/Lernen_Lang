@@ -1,6 +1,7 @@
 import "dotenv/config";
 import { Prisma } from "../app/generated/prisma/client";
 import { db } from "../lib/db";
+import { LISTENINGS } from "./listening-content";
 
 const LANGUAGES = [
   { code: "es", name: "Spanish", nativeName: "Español" },
@@ -848,6 +849,35 @@ async function main() {
           status: "PUBLISHED",
         },
       });
+    }
+
+    if (lessonOrder === 2) {
+      const listening = LISTENINGS.find((l) => l.moduleTitle === mod.title);
+      if (listening) {
+        const listeningContent = {
+          kind: "listening",
+          audioUrl: `/audio/es/listening/${listening.slug}.mp3`,
+          transcript: listening.script,
+          questions: listening.questions,
+        };
+        await db.exercise.upsert({
+          where: { lessonId_order: { lessonId: lessonRow.id, order: 4 } },
+          update: {
+            type: "LISTENING",
+            prompt: `Listening: ${mod.title}`,
+            content: listeningContent,
+            status: "PUBLISHED",
+          },
+          create: {
+            lessonId: lessonRow.id,
+            order: 4,
+            type: "LISTENING",
+            prompt: `Listening: ${mod.title}`,
+            content: listeningContent,
+            status: "PUBLISHED",
+          },
+        });
+      }
     }
     }
   }

@@ -2,7 +2,7 @@ import { db } from "@/lib/db";
 import type { ActionResult } from "@/lib/enrollments";
 import { isRating, RATINGS, type Rating } from "@/lib/ratings";
 import {
-  scoreReading,
+  scoreMcq,
   type ReadingQuestion,
   type ReadingScore,
 } from "@/lib/scoring";
@@ -28,6 +28,13 @@ export type SessionReading = {
   questions: { prompt: string; options: string[] }[];
 };
 
+export type SessionListening = {
+  id: string;
+  prompt: string;
+  audioUrl: string;
+  questions: { prompt: string; options: string[] }[];
+};
+
 export type LessonSession = {
   lessonId: string;
   lessonTitle: string;
@@ -40,6 +47,7 @@ export type LessonSession = {
   languageCode: string;
   cards: SessionCard[];
   reading: SessionReading | null;
+  listening: SessionListening | null;
   completed: boolean;
 };
 
@@ -112,7 +120,7 @@ export async function getSessionContent(
     return lesson;
   }
 
-  const [cards, readings, progress] = await Promise.all([
+  const [cards, readings, listenings, progress] = await Promise.all([
     db.flashcard.findMany({
       where: { lessonId: lesson.id, status: "PUBLISHED" },
       orderBy: { order: "asc" },
@@ -129,6 +137,10 @@ export async function getSessionContent(
     }),
     db.exercise.findMany({
       where: { lessonId: lesson.id, status: "PUBLISHED", type: "READING" },
+      orderBy: { order: "asc" },
+    }),
+    db.exercise.findMany({
+      where: { lessonId: lesson.id, status: "PUBLISHED", type: "LISTENING" },
       orderBy: { order: "asc" },
     }),
     db.userProgress.findUnique({
@@ -162,6 +174,31 @@ export async function getSessionContent(
     }
   }
 
+  let listening: SessionListening | null = null;
+  const listeningExercise = listenings[0];
+  if (listeningExercise) {
+    const content = listeningExercise.content as {
+      kind?: string;
+      audioUrl?: string;
+      questions?: ReadingQuestion[];
+    };
+    if (
+      content?.kind === "listening" &&
+      typeof content.audioUrl === "string" &&
+      Array.isArray(content.questions)
+    ) {
+      listening = {
+        id: listeningExercise.id,
+        prompt: listeningExercise.prompt,
+        audioUrl: content.audioUrl,
+        questions: content.questions.map((q) => ({
+          prompt: q.prompt,
+          options: q.options,
+        })),
+      };
+    }
+  }
+
   return {
     lessonId: lesson.id,
     lessonTitle: lesson.title,
@@ -174,6 +211,7 @@ export async function getSessionContent(
     languageCode: lesson.module.course.language.code,
     cards,
     reading,
+    listening,
     completed: progress?.status === "COMPLETED",
   };
 }
@@ -207,7 +245,44 @@ export async function scoreLessonReading(
     return { ok: false, error: "Malformed reading content." };
   }
 
-  const scored = scoreReading(content.questions, selections);
+  const scored = scoreMcq(content.questions, selections);
+  if ("error" in scored) {
+    return { ok: false, error: scored.error };
+  }
+
+  return { ok: true, ...scored };
+}
+
+export async function scoreLessonListening(
+  userId: string,
+  lessonId: string,
+  exerciseId: string,
+  selections: number[],
+): Promise<(ReadingScore & { ok: true }) | { ok: false; error: string }> {
+  const lesson = await loadAccessibleLesson(userId, lessonId);
+  if ("error" in lesson) {
+    return { ok: false, error: lesson.error };
+  }
+
+  const exercise = await db.exercise.findUnique({ where: { id: exerciseId } });
+  if (
+    !exercise ||
+    exercise.lessonId !== lesson.id ||
+    exercise.status !== "PUBLISHED" ||
+    exercise.type !== "LISTENING"
+  ) {
+    return { ok: false, error: "Listening exercise not found." };
+  }
+
+  const content = exercise.content as {
+    kind?: string;
+    questions?: ReadingQuestion[];
+  };
+  if (content?.kind !== "listening" || !Array.isArray(content.questions)) {
+    return { ok: false, error: "Malformed listening content." };
+  }
+
+  const scored = scoreMcq(content.questions, selections);
   if ("error" in scored) {
     return { ok: false, error: scored.error };
   }

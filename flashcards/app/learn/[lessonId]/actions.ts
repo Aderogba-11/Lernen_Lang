@@ -4,6 +4,7 @@ import { requireUser } from "@/lib/session";
 import {
   completeLesson,
   rateFlashcard,
+  scoreLessonListening,
   scoreLessonReading,
   type Rating,
 } from "@/lib/sessions";
@@ -20,6 +21,15 @@ export async function scoreReadingAction(
 ) {
   const user = await requireUser();
   return scoreLessonReading(user.id, lessonId, exerciseId, selections);
+}
+
+export async function scoreListeningAction(
+  lessonId: string,
+  exerciseId: string,
+  selections: number[],
+) {
+  const user = await requireUser();
+  return scoreLessonListening(user.id, lessonId, exerciseId, selections);
 }
 
 export async function completeLessonAction(lessonId: string) {

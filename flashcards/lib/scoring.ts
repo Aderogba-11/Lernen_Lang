@@ -15,7 +15,7 @@ export function normalizeText(value: string): string {
   return value.trim().toLowerCase().replace(/\s+/g, " ");
 }
 
-export function scoreReading(
+export function scoreMcq(
   questions: ReadingQuestion[],
   selections: number[],
 ): ReadingScore | { error: string } {
@@ -41,4 +41,23 @@ export function scoreReading(
 
   const correct = results.filter(Boolean).length;
   return { total: questions.length, correct, results, correctAnswers };
+}
+
+export const scoreReading = scoreMcq;
+
+export function normalizeWriting(value: string): string {
+  return normalizeText(value)
+    .replace(/[.!¡?¿]+$/g, "")
+    .replace(/\s+/g, " ");
+}
+
+export function scoreWriting(
+  expected: string,
+  accept: string[],
+  response: string,
+): boolean {
+  const normalized = normalizeWriting(response);
+  if (normalized.length === 0) return false;
+  return normalizeWriting(expected) === normalized ||
+    accept.some((variant) => normalizeWriting(variant) === normalized);
 }
