@@ -51,7 +51,7 @@ const translation = (source: string, expected: string, accept: string[] = []): E
 
 const fillBlank = (sentence: string, hint: string, expected: string, accept: string[] = []): ExerciseSeed => ({
   type: "WRITING",
-  prompt: `Fill in the blank: ${sentence} (${hint})`,
+  prompt: `Fill in the blank: ${sentence}`,
   content: { kind: "fill-blank", sentence, hint },
   answer: { expected, accept },
 });

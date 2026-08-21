@@ -296,6 +296,7 @@ export function SessionClient({ session }: { session: LessonSession }) {
   if (phase === "writing" && session.writings[writingIndex]) {
     return (
       <WritingStep
+        key={session.writings[writingIndex].id}
         lessonId={session.lessonId}
         writing={session.writings[writingIndex]}
         stepNumber={writingIndex + 1}

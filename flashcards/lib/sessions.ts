@@ -240,7 +240,7 @@ export async function getSessionContent(
       content?.kind === "fill-blank" &&
       typeof content.sentence === "string"
     ) {
-      display = `${content.sentence} (${content.hint ?? ""})`;
+      display = content.sentence;
     } else if (
       content?.kind === "word-order" &&
       Array.isArray(content.words)
