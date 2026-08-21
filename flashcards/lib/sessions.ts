@@ -1,5 +1,10 @@
 import { db } from "@/lib/db";
 import type { ActionResult } from "@/lib/enrollments";
+import {
+  scoreReading,
+  type ReadingQuestion,
+  type ReadingScore,
+} from "@/lib/scoring";
 
 export const RATINGS = ["AGAIN", "HARD", "GOOD", "EASY"] as const;
 export type Rating = (typeof RATINGS)[number];
@@ -19,6 +24,13 @@ export type SessionCard = {
   audioUrl: string | null;
 };
 
+export type SessionReading = {
+  id: string;
+  prompt: string;
+  passage: string;
+  questions: { prompt: string; options: string[] }[];
+};
+
 export type LessonSession = {
   lessonId: string;
   lessonTitle: string;
@@ -30,6 +42,7 @@ export type LessonSession = {
   courseTitle: string;
   languageCode: string;
   cards: SessionCard[];
+  reading: SessionReading | null;
   completed: boolean;
 };
 
@@ -102,7 +115,7 @@ export async function getSessionContent(
     return lesson;
   }
 
-  const [cards, progress] = await Promise.all([
+  const [cards, readings, progress] = await Promise.all([
     db.flashcard.findMany({
       where: { lessonId: lesson.id, status: "PUBLISHED" },
       orderBy: { order: "asc" },
@@ -117,11 +130,40 @@ export async function getSessionContent(
         audioUrl: true,
       },
     }),
+    db.exercise.findMany({
+      where: { lessonId: lesson.id, status: "PUBLISHED", type: "READING" },
+      orderBy: { order: "asc" },
+    }),
     db.userProgress.findUnique({
       where: { userId_lessonId: { userId, lessonId: lesson.id } },
       select: { status: true },
     }),
   ]);
+
+  let reading: SessionReading | null = null;
+  const readingExercise = readings[0];
+  if (readingExercise) {
+    const content = readingExercise.content as {
+      kind?: string;
+      passage?: string;
+      questions?: ReadingQuestion[];
+    };
+    if (
+      content?.kind === "reading" &&
+      typeof content.passage === "string" &&
+      Array.isArray(content.questions)
+    ) {
+      reading = {
+        id: readingExercise.id,
+        prompt: readingExercise.prompt,
+        passage: content.passage,
+        questions: content.questions.map((q) => ({
+          prompt: q.prompt,
+          options: q.options,
+        })),
+      };
+    }
+  }
 
   return {
     lessonId: lesson.id,
@@ -134,8 +176,46 @@ export async function getSessionContent(
     courseTitle: lesson.module.course.title,
     languageCode: lesson.module.course.language.code,
     cards,
+    reading,
     completed: progress?.status === "COMPLETED",
   };
+}
+
+export async function scoreLessonReading(
+  userId: string,
+  lessonId: string,
+  exerciseId: string,
+  selections: number[],
+): Promise<(ReadingScore & { ok: true }) | { ok: false; error: string }> {
+  const lesson = await loadAccessibleLesson(userId, lessonId);
+  if ("error" in lesson) {
+    return { ok: false, error: lesson.error };
+  }
+
+  const exercise = await db.exercise.findUnique({ where: { id: exerciseId } });
+  if (
+    !exercise ||
+    exercise.lessonId !== lesson.id ||
+    exercise.status !== "PUBLISHED" ||
+    exercise.type !== "READING"
+  ) {
+    return { ok: false, error: "Reading exercise not found." };
+  }
+
+  const content = exercise.content as {
+    kind?: string;
+    questions?: ReadingQuestion[];
+  };
+  if (content?.kind !== "reading" || !Array.isArray(content.questions)) {
+    return { ok: false, error: "Malformed reading content." };
+  }
+
+  const scored = scoreReading(content.questions, selections);
+  if ("error" in scored) {
+    return { ok: false, error: scored.error };
+  }
+
+  return { ok: true, ...scored };
 }
 
 export async function rateFlashcard(

@@ -14,8 +14,10 @@ import {
 import {
   completeLessonAction,
   rateFlashcardAction,
+  scoreReadingAction,
 } from "./actions";
 import { RATINGS, type LessonSession, type Rating } from "@/lib/sessions";
+import type { ReadingScore } from "@/lib/scoring";
 
 const RATING_LABELS: Record<Rating, string> = {
   AGAIN: "Again",
@@ -50,6 +52,7 @@ function speakFallback(text: string) {
 export function SessionClient({ session }: { session: LessonSession }) {
   const [index, setIndex] = useState(0);
   const [revealed, setRevealed] = useState(false);
+  const [phase, setPhase] = useState<"cards" | "reading">("cards");
   const [counts, setCounts] = useState<Record<Rating, number>>({
     AGAIN: 0,
     HARD: 0,
@@ -91,12 +94,23 @@ export function SessionClient({ session }: { session: LessonSession }) {
     startTransition(async () => {
       await rateFlashcardAction(card.id, rating);
       if (isLast) {
-        await completeLessonAction(session.lessonId);
-        setFinished(true);
+        if (session.reading) {
+          setPhase("reading");
+        } else {
+          await completeLessonAction(session.lessonId);
+          setFinished(true);
+        }
       } else {
         setIndex((prev) => prev + 1);
         setRevealed(false);
       }
+    });
+  }
+
+  function handleReadingDone() {
+    startTransition(async () => {
+      await completeLessonAction(session.lessonId);
+      setFinished(true);
     });
   }
 
@@ -141,6 +155,17 @@ export function SessionClient({ session }: { session: LessonSession }) {
           </div>
         </CardContent>
       </Card>
+    );
+  }
+
+  if (phase === "reading" && session.reading) {
+    return (
+      <ReadingStep
+        lessonId={session.lessonId}
+        reading={session.reading}
+        pending={pending}
+        onDone={handleReadingDone}
+      />
     );
   }
 
@@ -214,6 +239,116 @@ export function SessionClient({ session }: { session: LessonSession }) {
         ) : (
           <Button className="w-full" onClick={() => setRevealed(true)}>
             Reveal answer
+          </Button>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function ReadingStep({
+  lessonId,
+  reading,
+  pending,
+  onDone,
+}: {
+  lessonId: string;
+  reading: NonNullable<LessonSession["reading"]>;
+  pending: boolean;
+  onDone: () => void;
+}) {
+  const [selections, setSelections] = useState<number[]>(
+    Array(reading.questions.length).fill(-1),
+  );
+  const [result, setResult] = useState<(ReadingScore & { ok: true }) | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, startSubmit] = useTransition();
+
+  const allAnswered = selections.every((s) => s >= 0);
+
+  function handleSubmit() {
+    if (!allAnswered || submitting || result) return;
+    setError(null);
+    startSubmit(async () => {
+      const scored = await scoreReadingAction(lessonId, reading.id, selections);
+      if (scored.ok) {
+        setResult(scored);
+      } else {
+        setError(scored.error);
+      }
+    });
+  }
+
+  return (
+    <Card className="w-full max-w-2xl">
+      <CardHeader>
+        <CardTitle>Reading</CardTitle>
+        <CardDescription>{reading.prompt}</CardDescription>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-6">
+        <p className="rounded-lg border border-zinc-200 p-4 text-base leading-relaxed dark:border-zinc-800">
+          {reading.passage}
+        </p>
+
+        <ol className="flex flex-col gap-5">
+          {reading.questions.map((question, qIndex) => (
+            <li key={qIndex} className="flex flex-col gap-2">
+              <span className="font-medium">
+                {qIndex + 1}. {question.prompt}
+                {result && (
+                  <span className={result.results[qIndex] ? " text-green-600" : " text-red-600"}>
+                    {result.results[qIndex] ? " ✓" : " ✗"}
+                  </span>
+                )}
+              </span>
+              <div className="flex flex-col gap-1.5">
+                {question.options.map((option, oIndex) => {
+                  const isSelected = selections[qIndex] === oIndex;
+                  const isCorrect = result && result.correctAnswers[qIndex] === oIndex;
+                  return (
+                    <label
+                      key={oIndex}
+                      className={`flex cursor-pointer items-center gap-2 rounded-md border p-2 text-sm transition-colors ${
+                        isSelected
+                          ? "border-zinc-900 dark:border-zinc-100"
+                          : "border-zinc-200 dark:border-zinc-800"
+                      } ${isCorrect ? "border-green-600 text-green-700 dark:text-green-400" : ""}`}
+                    >
+                      <input
+                        type="radio"
+                        name={`q-${qIndex}`}
+                        className="accent-zinc-900"
+                        checked={isSelected}
+                        disabled={!!result || submitting}
+                        onChange={() =>
+                          setSelections((prev) =>
+                            prev.map((s, i) => (i === qIndex ? oIndex : s)),
+                          )
+                        }
+                      />
+                      {option}
+                    </label>
+                  );
+                })}
+              </div>
+            </li>
+          ))}
+        </ol>
+
+        {error && <p className="text-sm text-red-600">{error}</p>}
+
+        {result ? (
+          <div className="flex flex-col gap-3">
+            <p className="text-sm font-medium">
+              You got {result.correct} of {result.total} correct.
+            </p>
+            <Button onClick={onDone} disabled={pending}>
+              Finish lesson
+            </Button>
+          </div>
+        ) : (
+          <Button onClick={handleSubmit} disabled={!allAnswered || submitting}>
+            Check answers
           </Button>
         )}
       </CardContent>

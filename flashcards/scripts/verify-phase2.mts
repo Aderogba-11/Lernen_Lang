@@ -33,8 +33,12 @@ async function main() {
   const foundations = course!.modules[0];
   assert(foundations.lessons.length === 3, "expected 3 lessons in Foundations");
   assert(
-    foundations.lessons.every((l) => l.exercises.length >= 1 && l.exercises.every((e) => e.type === "WRITING")),
-    "each lesson should have WRITING exercises only",
+    foundations.lessons.every(
+      (l) =>
+        l.exercises.some((e) => e.type === "WRITING") &&
+        l.exercises.every((e) => e.type === "WRITING" || e.type === "READING"),
+    ),
+    "each lesson should have WRITING exercises (plus optional READING)",
   );
   const greetings = foundations.lessons[0];
   console.log("sample exercise:", greetings.exercises[0].prompt);

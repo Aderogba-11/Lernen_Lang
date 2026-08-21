@@ -55,8 +55,8 @@ async function main() {
         `${mod.title}/${lesson.title} missing notes`,
       );
       assert(
-        lesson.exercises.length === 3,
-        `${mod.title}/${lesson.title}: expected 3 exercises, got ${lesson.exercises.length}`,
+        lesson.exercises.length === 3 || lesson.exercises.length === 4,
+        `${mod.title}/${lesson.title}: expected 3-4 exercises, got ${lesson.exercises.length}`,
       );
       const kinds = lesson.exercises.map(
         (e) => (e.content as { kind?: string }).kind,
@@ -65,14 +65,24 @@ async function main() {
         KINDS.every((k) => kinds.includes(k)),
         `${mod.title}/${lesson.title}: exercise kind mix wrong (${kinds.join(",")})`,
       );
-      for (const exercise of lesson.exercises) {
-        assert(exercise.type === "WRITING", `exercise ${exercise.id} type != WRITING`);
-        assert(exercise.prompt.length > 5, `exercise ${exercise.id} prompt too short`);
-        const answer = exercise.answer as { expected?: string };
+      if (lesson.exercises.length === 4) {
+        const extra = lesson.exercises[3]!;
         assert(
-          typeof answer.expected === "string" && answer.expected.length > 0,
-          `exercise ${exercise.id} missing answer.expected`,
+          extra.type === "READING" && kinds[3] === "reading",
+          `${mod.title}/${lesson.title}: 4th exercise should be READING`,
         );
+      }
+      for (const [eIndex, exercise] of lesson.exercises.entries()) {
+        const expectedType = eIndex === 3 ? "READING" : "WRITING";
+        assert(exercise.type === expectedType, `exercise ${exercise.id} type != ${expectedType}`);
+        assert(exercise.prompt.length > 5, `exercise ${exercise.id} prompt too short`);
+        if (expectedType === "WRITING") {
+          const answer = exercise.answer as { expected?: string } | null;
+          assert(
+            !!answer && typeof answer.expected === "string" && answer.expected.length > 0,
+            `exercise ${exercise.id} missing answer.expected`,
+          );
+        }
       }
     }
   }
@@ -81,7 +91,7 @@ async function main() {
   const dbExercises = await db.exercise.count({
     where: { lesson: { module: { courseId: course!.id } }, status: "PUBLISHED" },
   });
-  assert(dbExercises === 54, `expected 54 published exercises in DB, got ${dbExercises}`);
+  assert(dbExercises === 60, `expected 60 published exercises in DB, got ${dbExercises}`);
 
   console.log(`PHASE 4 VERIFICATION PASSED (${modules.length} modules, ${lessonTotal} lessons, ${dbExercises} exercises)`);
 }

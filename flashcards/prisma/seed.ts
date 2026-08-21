@@ -545,6 +545,146 @@ const CARDS: Record<string, CardSeed[]> = {
   ],
 };
 
+type ReadingQuestion = {
+  prompt: string;
+  options: string[];
+  answerIndex: number;
+};
+
+const READINGS: Record<string, { passage: string; questions: ReadingQuestion[] }> = {
+  Foundations: {
+    passage:
+      "Hola, me llamo Carlos. Soy de México. Mi hermana se llama Ana. Ella es joven y muy simpática. Todos los días digo «Buenos días» a mi profesora.",
+    questions: [
+      {
+        prompt: "¿De dónde es Carlos?",
+        options: ["De España", "De México", "De Perú", "De Argentina"],
+        answerIndex: 1,
+      },
+      {
+        prompt: "¿Cómo se llama su hermana?",
+        options: ["Lucía", "María", "Ana", "Elena"],
+        answerIndex: 2,
+      },
+      {
+        prompt: "¿Cómo es Ana?",
+        options: ["Joven y simpática", "Mayor y seria", "Baja y rubia", "Delgada y alta"],
+        answerIndex: 0,
+      },
+    ],
+  },
+  "Numbers and Time": {
+    passage:
+      "Los lunes tengo clase a las nueve de la mañana. Los miércoles trabajo hasta las cinco. El sábado juego al fútbol con mis amigos. Hoy es viernes y son las cuatro y media de la tarde.",
+    questions: [
+      {
+        prompt: "¿Cuándo tiene clase?",
+        options: ["El lunes", "El martes", "El domingo", "El sábado"],
+        answerIndex: 0,
+      },
+      {
+        prompt: "¿Qué día juega al fútbol?",
+        options: ["Viernes", "Sábado", "Lunes", "Miércoles"],
+        answerIndex: 1,
+      },
+      {
+        prompt: "¿Qué hora es hoy?",
+        options: ["Las cuatro y media", "Las cinco y cuarto", "Las ocho", "El mediodía"],
+        answerIndex: 0,
+      },
+    ],
+  },
+  People: {
+    passage:
+      "Mi familia es grande. Mi padre se llama Roberto y es alto. Mi madre, Elena, es profesora y muy simpática. Tengo dos hermanos y una hermana pequeña. Mi abuelo tiene ochenta años.",
+    questions: [
+      {
+        prompt: "¿Cómo se llama el padre?",
+        options: ["Roberto", "Carlos", "Elena", "Pablo"],
+        answerIndex: 0,
+      },
+      {
+        prompt: "¿Cuántos hermanos tiene?",
+        options: ["Uno", "Dos", "Tres", "Cuatro"],
+        answerIndex: 1,
+      },
+      {
+        prompt: "¿Cuántos años tiene el abuelo?",
+        options: ["Setenta", "Ochenta", "Noventa", "Diez"],
+        answerIndex: 1,
+      },
+    ],
+  },
+  "Everyday Life": {
+    passage:
+      "Todos los días me despierto a las siete. Desayuno café con pan. Trabajo en una oficina y ceno a las nueve con mi familia. Los sábados como en un restaurante con mis amigos.",
+    questions: [
+      {
+        prompt: "¿A qué hora se despierta?",
+        options: ["A las seis", "A las siete", "A las ocho", "A las nueve"],
+        answerIndex: 1,
+      },
+      {
+        prompt: "¿Qué desayuna?",
+        options: ["Té y fruta", "Café con pan", "Leche y cereales", "Nada"],
+        answerIndex: 1,
+      },
+      {
+        prompt: "¿Con quién cena?",
+        options: ["Solo", "Con su familia", "Con sus vecinos", "En la oficina"],
+        answerIndex: 1,
+      },
+    ],
+  },
+  "Out and About": {
+    passage:
+      "Vivo cerca del centro. Hay un supermercado al lado de la biblioteca. Para ir al banco, sigo todo recto y giro a la derecha en el semáforo. La plaza está lejos de mi casa, pero el mercado está cerca.",
+    questions: [
+      {
+        prompt: "¿Dónde está el supermercado?",
+        options: [
+          "Cerca del banco",
+          "Al lado de la biblioteca",
+          "En la plaza",
+          "Lejos del centro",
+        ],
+        answerIndex: 1,
+      },
+      {
+        prompt: "¿Adónde gira a la derecha?",
+        options: ["En la esquina", "En el semáforo", "En la plaza", "En el banco"],
+        answerIndex: 1,
+      },
+      {
+        prompt: "¿Qué está lejos?",
+        options: ["El mercado", "La biblioteca", "La plaza", "El supermercado"],
+        answerIndex: 2,
+      },
+    ],
+  },
+  "Free Time": {
+    passage:
+      "El fin de semana tengo muchos planes. El sábado voy a nadar por la mañana y luego voy a cocinar con mi padre. Si llueve, vamos a ver una película en casa. El domingo descanso y escucho música.",
+    questions: [
+      {
+        prompt: "¿Qué va a hacer el sábado por la mañana?",
+        options: ["Nadar", "Bailar", "Correr", "Leer"],
+        answerIndex: 0,
+      },
+      {
+        prompt: "¿Con quién va a cocinar?",
+        options: ["Con su madre", "Con su padre", "Con amigos", "Solo"],
+        answerIndex: 1,
+      },
+      {
+        prompt: "¿Qué hacen si llueve?",
+        options: ["Viajar", "Ver una película", "Descansar", "Jugar al tenis"],
+        answerIndex: 1,
+      },
+    ],
+  },
+};
+
 async function main() {
   for (const lang of LANGUAGES) {
     await db.language.upsert({
@@ -682,6 +822,32 @@ async function main() {
         },
       });
       cardCount += 1;
+    }
+
+    const reading = READINGS[mod.title];
+    if (reading && lessonOrder === 1) {
+      const readingContent = {
+        kind: "reading",
+        passage: reading.passage,
+        questions: reading.questions,
+      };
+      await db.exercise.upsert({
+        where: { lessonId_order: { lessonId: lessonRow.id, order: 4 } },
+        update: {
+          type: "READING",
+          prompt: `Reading: ${mod.title}`,
+          content: readingContent,
+          status: "PUBLISHED",
+        },
+        create: {
+          lessonId: lessonRow.id,
+          order: 4,
+          type: "READING",
+          prompt: `Reading: ${mod.title}`,
+          content: readingContent,
+          status: "PUBLISHED",
+        },
+      });
     }
     }
   }
