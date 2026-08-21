@@ -4,7 +4,7 @@ import { nextCookies } from "better-auth/next-js";
 import { db } from "@/lib/db";
 
 export const auth = betterAuth({
-  database: prismaAdapter(db, { provider: "sqlite" }),
+  database: prismaAdapter(db, { provider: "postgresql" }),
   emailAndPassword: {
     enabled: true,
   },
