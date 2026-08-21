@@ -68,7 +68,13 @@ async function main() {
       if (lesson.exercises.length === 4) {
         const extra = lesson.exercises[3]!;
         const expectedExtra =
-          lesson.order === 1 ? "READING" : lesson.order === 2 ? "LISTENING" : null;
+          lesson.order === 1
+            ? "READING"
+            : lesson.order === 2
+              ? "LISTENING"
+              : lesson.order === 3
+                ? "SPEAKING"
+                : null;
         assert(
           expectedExtra !== null && extra.type === expectedExtra,
           `${mod.title}/${lesson.title}: 4th exercise should be ${expectedExtra ?? "none"}`,
@@ -76,7 +82,13 @@ async function main() {
       }
       for (const [eIndex, exercise] of lesson.exercises.entries()) {
         const expectedType =
-          eIndex === 3 ? (lesson.order === 1 ? "READING" : "LISTENING") : "WRITING";
+          eIndex === 3
+            ? lesson.order === 1
+              ? "READING"
+              : lesson.order === 2
+                ? "LISTENING"
+                : "SPEAKING"
+            : "WRITING";
         assert(exercise.type === expectedType, `exercise ${exercise.id} type != ${expectedType}`);
         assert(exercise.prompt.length > 5, `exercise ${exercise.id} prompt too short`);
         if (expectedType === "WRITING") {
@@ -94,7 +106,7 @@ async function main() {
   const dbExercises = await db.exercise.count({
     where: { lesson: { module: { courseId: course!.id } }, status: "PUBLISHED" },
   });
-  assert(dbExercises === 66, `expected 66 published exercises in DB, got ${dbExercises}`);
+  assert(dbExercises === 72, `expected 72 published exercises in DB, got ${dbExercises}`);
 
   console.log(`PHASE 4 VERIFICATION PASSED (${modules.length} modules, ${lessonTotal} lessons, ${dbExercises} exercises)`);
 }

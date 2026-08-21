@@ -2,6 +2,7 @@ import "dotenv/config";
 import { Prisma } from "../app/generated/prisma/client";
 import { db } from "../lib/db";
 import { LISTENINGS } from "./listening-content";
+import { SPEAKINGS } from "./speaking-content";
 
 const LANGUAGES = [
   { code: "es", name: "Spanish", nativeName: "Español" },
@@ -879,7 +880,36 @@ async function main() {
         });
       }
     }
+
+    if (lessonOrder === 3) {
+      const speaking = SPEAKINGS.find((s) => s.moduleTitle === mod.title);
+      if (speaking) {
+        const speakingContent = {
+          kind: "speaking",
+          targetText: speaking.targetText,
+          translation: speaking.translation,
+          audioUrl: `/audio/es/speaking/${speaking.slug}.mp3`,
+        };
+        await db.exercise.upsert({
+          where: { lessonId_order: { lessonId: lessonRow.id, order: 5 } },
+          update: {
+            type: "SPEAKING",
+            prompt: "Speak: repeat the sentence aloud",
+            content: speakingContent,
+            status: "PUBLISHED",
+          },
+          create: {
+            lessonId: lessonRow.id,
+            order: 5,
+            type: "SPEAKING",
+            prompt: "Speak: repeat the sentence aloud",
+            content: speakingContent,
+            status: "PUBLISHED",
+          },
+        });
+      }
     }
+  }
   }
 
   const counts = {

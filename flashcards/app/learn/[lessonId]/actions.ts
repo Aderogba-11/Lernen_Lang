@@ -6,6 +6,7 @@ import {
   rateFlashcard,
   scoreLessonListening,
   scoreLessonReading,
+  scoreLessonSpeaking,
   scoreLessonWriting,
   type Rating,
 } from "@/lib/sessions";
@@ -40,6 +41,15 @@ export async function scoreWritingAction(
 ) {
   const user = await requireUser();
   return scoreLessonWriting(user.id, lessonId, exerciseId, response);
+}
+
+export async function scoreSpeakingAction(
+  lessonId: string,
+  exerciseId: string,
+  transcript: string,
+) {
+  const user = await requireUser();
+  return scoreLessonSpeaking(user.id, lessonId, exerciseId, transcript);
 }
 
 export async function completeLessonAction(lessonId: string) {

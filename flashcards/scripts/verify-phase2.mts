@@ -36,9 +36,9 @@ async function main() {
     foundations.lessons.every(
       (l) =>
         l.exercises.some((e) => e.type === "WRITING") &&
-        l.exercises.every((e) => ["WRITING", "READING", "LISTENING"].includes(e.type)),
+        l.exercises.every((e) => ["WRITING", "READING", "LISTENING", "SPEAKING"].includes(e.type)),
     ),
-    "each lesson should have WRITING exercises (plus optional READING/LISTENING)",
+    "each lesson should have WRITING exercises (plus optional READING/LISTENING/SPEAKING)",
   );
   const greetings = foundations.lessons[0];
   console.log("sample exercise:", greetings.exercises[0].prompt);

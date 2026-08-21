@@ -16,6 +16,7 @@ import {
   rateFlashcardAction,
   scoreListeningAction,
   scoreReadingAction,
+  scoreSpeakingAction,
   scoreWritingAction,
 } from "./actions";
 import { RATINGS, type Rating } from "@/lib/ratings";
@@ -23,8 +24,10 @@ import type {
   LessonSession,
   SessionListening,
   SessionReading,
+  SessionSpeaking,
   SessionWriting,
 } from "@/lib/sessions";
+import { isSpeechRecognitionSupported, listenForSpeech } from "@/lib/speech";
 import type { ReadingScore } from "@/lib/scoring";
 
 const RATING_LABELS: Record<Rating, string> = {
@@ -130,7 +133,7 @@ function speakFallback(text: string) {
 export function SessionClient({ session }: { session: LessonSession }) {
   const [index, setIndex] = useState(0);
   const [revealed, setRevealed] = useState(false);
-  const [phase, setPhase] = useState<"cards" | "writing" | "reading" | "listening">("cards");
+  const [phase, setPhase] = useState<"cards" | "writing" | "reading" | "listening" | "speaking">("cards");
   const [writingIndex, setWritingIndex] = useState(0);
   const [counts, setCounts] = useState<Record<Rating, number>>({
     AGAIN: 0,
@@ -204,6 +207,8 @@ export function SessionClient({ session }: { session: LessonSession }) {
         setPhase("reading");
       } else if (session.listening) {
         setPhase("listening");
+      } else if (session.speaking) {
+        setPhase("speaking");
       } else {
         await completeLessonAction(session.lessonId);
         setFinished(true);
@@ -215,6 +220,8 @@ export function SessionClient({ session }: { session: LessonSession }) {
     startTransition(async () => {
       if (session.listening) {
         setPhase("listening");
+      } else if (session.speaking) {
+        setPhase("speaking");
       } else {
         await completeLessonAction(session.lessonId);
         setFinished(true);
@@ -223,6 +230,17 @@ export function SessionClient({ session }: { session: LessonSession }) {
   }
 
   function handleListeningDone() {
+    startTransition(async () => {
+      if (session.speaking) {
+        setPhase("speaking");
+      } else {
+        await completeLessonAction(session.lessonId);
+        setFinished(true);
+      }
+    });
+  }
+
+  function handleSpeakingDone() {
     startTransition(async () => {
       await completeLessonAction(session.lessonId);
       setFinished(true);
@@ -306,6 +324,17 @@ export function SessionClient({ session }: { session: LessonSession }) {
         listening={session.listening}
         pending={pending}
         onDone={handleListeningDone}
+      />
+    );
+  }
+
+  if (phase === "speaking" && session.speaking) {
+    return (
+      <SpeakingStep
+        lessonId={session.lessonId}
+        speaking={session.speaking}
+        pending={pending}
+        onDone={handleSpeakingDone}
       />
     );
   }
@@ -467,6 +496,135 @@ function WritingStep({
           <Button onClick={handleSubmit} disabled={!value.trim() || submitting}>
             Check answer
           </Button>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function SpeakingStep({
+  lessonId,
+  speaking,
+  pending,
+  onDone,
+}: {
+  lessonId: string;
+  speaking: SessionSpeaking;
+  pending: boolean;
+  onDone: () => void;
+}) {
+  const [listening, setListening] = useState(false);
+  const [transcript, setTranscript] = useState<string | null>(null);
+  const [result, setResult] = useState<{ correct: boolean; expected: string } | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [typed, setTyped] = useState("");
+  const [submitting, startSubmit] = useTransition();
+
+  function submit(value: string) {
+    if (!value.trim() || submitting || result) return;
+    setError(null);
+    startSubmit(async () => {
+      const scored = await scoreSpeakingAction(lessonId, speaking.id, value);
+      if (scored.ok) {
+        setTranscript(value);
+        setResult(scored);
+      } else {
+        setError(scored.error);
+      }
+    });
+  }
+
+  async function handleMic() {
+    if (listening || result) return;
+    setError(null);
+    setListening(true);
+    try {
+      const heard = await listenForSpeech("es-ES");
+      submit(heard);
+    } catch (e) {
+      const code = e instanceof Error ? e.message : "speech-error";
+      setError(
+        code === "unsupported"
+          ? "Speech recognition is not supported in this browser — type your answer below instead."
+          : code === "not-allowed"
+            ? "Microphone access was denied — type your answer below instead."
+            : "Didn't catch that. Try again or type your answer below.",
+      );
+    } finally {
+      setListening(false);
+    }
+  }
+
+  return (
+    <Card className="w-full max-w-2xl">
+      <CardHeader>
+        <CardTitle>Speaking</CardTitle>
+        <CardDescription>{speaking.prompt}</CardDescription>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-5">
+        <div className="flex flex-col items-center gap-3 rounded-lg border border-zinc-200 p-4 text-center dark:border-zinc-800">
+          <p className="text-xl font-medium">{speaking.targetText}</p>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => playCardAudio(speaking.targetText, speaking.audioUrl)}
+          >
+            Play audio
+          </Button>
+        </div>
+
+        {transcript !== null && (
+          <p className="text-sm text-zinc-500">
+            We heard: <span className="italic">“{transcript}”</span>
+          </p>
+        )}
+
+        {error && <p className="text-sm text-red-600">{error}</p>}
+
+        {result ? (
+          <div className="flex flex-col gap-3">
+            <p className={`text-sm font-medium ${result.correct ? "text-green-600" : "text-red-600"}`}>
+              {result.correct ? "¡Perfecto! That matches." : "Close — compare with the target sentence above."}
+            </p>
+            <Button onClick={onDone} disabled={pending}>
+              Finish lesson
+            </Button>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-3">
+            <Button
+              size="lg"
+              disabled={listening || submitting}
+              onClick={handleMic}
+            >
+              {listening ? "Listening… speak now" : "Record answer"}
+            </Button>
+
+            {isSpeechRecognitionSupported() && (
+              <p className="text-center text-xs text-zinc-400">
+                Or type it instead:
+              </p>
+            )}
+            <div className="flex gap-2">
+              <input
+                className="w-full rounded-md border border-zinc-300 bg-transparent p-2 text-sm outline-none focus:border-zinc-900 dark:border-zinc-700 dark:focus:border-zinc-100"
+                placeholder="Type the sentence…"
+                value={typed}
+                disabled={listening || submitting}
+                onChange={(e) => setTyped(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") submit(typed);
+                }}
+              />
+              <Button
+                variant="outline"
+                disabled={!typed.trim() || listening || submitting}
+                onClick={() => submit(typed)}
+              >
+                Check
+              </Button>
+            </div>
+          </div>
         )}
       </CardContent>
     </Card>

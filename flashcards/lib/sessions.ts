@@ -43,6 +43,13 @@ export type SessionWriting = {
   display: string;
 };
 
+export type SessionSpeaking = {
+  id: string;
+  prompt: string;
+  targetText: string;
+  audioUrl: string;
+};
+
 export type LessonSession = {
   lessonId: string;
   lessonTitle: string;
@@ -57,6 +64,7 @@ export type LessonSession = {
   writings: SessionWriting[];
   reading: SessionReading | null;
   listening: SessionListening | null;
+  speaking: SessionSpeaking | null;
   completed: boolean;
 };
 
@@ -129,7 +137,7 @@ export async function getSessionContent(
     return lesson;
   }
 
-  const [cards, writings, readings, listenings, progress] = await Promise.all([
+  const [cards, writings, readings, listenings, speakings, progress] = await Promise.all([
     db.flashcard.findMany({
       where: { lessonId: lesson.id, status: "PUBLISHED" },
       orderBy: { order: "asc" },
@@ -154,6 +162,10 @@ export async function getSessionContent(
     }),
     db.exercise.findMany({
       where: { lessonId: lesson.id, status: "PUBLISHED", type: "LISTENING" },
+      orderBy: { order: "asc" },
+    }),
+    db.exercise.findMany({
+      where: { lessonId: lesson.id, status: "PUBLISHED", type: "SPEAKING" },
       orderBy: { order: "asc" },
     }),
     db.userProgress.findUnique({
@@ -245,6 +257,28 @@ export async function getSessionContent(
     }
   }
 
+  let speaking: SessionSpeaking | null = null;
+  const speakingExercise = speakings[0];
+  if (speakingExercise) {
+    const content = speakingExercise.content as {
+      kind?: string;
+      targetText?: string;
+      audioUrl?: string;
+    };
+    if (
+      content?.kind === "speaking" &&
+      typeof content.targetText === "string" &&
+      typeof content.audioUrl === "string"
+    ) {
+      speaking = {
+        id: speakingExercise.id,
+        prompt: speakingExercise.prompt,
+        targetText: content.targetText,
+        audioUrl: content.audioUrl,
+      };
+    }
+  }
+
   return {
     lessonId: lesson.id,
     lessonTitle: lesson.title,
@@ -259,6 +293,7 @@ export async function getSessionContent(
     writings: writingsClient,
     reading,
     listening,
+    speaking,
     completed: progress?.status === "COMPLETED",
   };
 }
@@ -338,6 +373,46 @@ export async function scoreLessonWriting(
 
   const correct = scoreWriting(answer.expected, answer.accept ?? [], response);
   return { ok: true, correct, expected: answer.expected };
+}
+
+export async function scoreLessonSpeaking(
+  userId: string,
+  lessonId: string,
+  exerciseId: string,
+  transcript: string,
+): Promise<
+  | { ok: true; correct: boolean; expected: string }
+  | { ok: false; error: string }
+> {
+  const lesson = await loadAccessibleLesson(userId, lessonId);
+  if ("error" in lesson) {
+    return { ok: false, error: lesson.error };
+  }
+
+  const exercise = await db.exercise.findUnique({ where: { id: exerciseId } });
+  if (
+    !exercise ||
+    exercise.lessonId !== lesson.id ||
+    exercise.status !== "PUBLISHED" ||
+    exercise.type !== "SPEAKING"
+  ) {
+    return { ok: false, error: "Speaking exercise not found." };
+  }
+
+  const content = exercise.content as {
+    kind?: string;
+    targetText?: string;
+  };
+  if (content?.kind !== "speaking" || typeof content.targetText !== "string") {
+    return { ok: false, error: "Malformed speaking content." };
+  }
+
+  if (!transcript.trim()) {
+    return { ok: false, error: "Please speak into the microphone." };
+  }
+
+  const correct = scoreWriting(content.targetText, [], transcript);
+  return { ok: true, correct, expected: content.targetText };
 }
 
 export async function scoreLessonListening(
