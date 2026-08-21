@@ -17,7 +17,7 @@ async function main() {
     where: { lessonId: { in: lessons.map((l) => l.id) }, status: "PUBLISHED" },
     orderBy: [{ lessonId: "asc" }, { order: "asc" }],
   });
-  assert(cards.length === 144, `expected 144 published cards, got ${cards.length}`);
+  assert(cards.length === 176, `expected 176 published cards, got ${cards.length}`);
 
   const byLesson = new Map<string, typeof cards>();
   for (const c of cards) {
@@ -27,11 +27,12 @@ async function main() {
   }
   for (const lesson of lessons) {
     const list = byLesson.get(lesson.id) ?? [];
-    assert(list.length === 8, `${lesson.title}: expected 8 cards, got ${list.length}`);
+    const expected = lesson.title === "Numbers 1–100" ? 40 : 8;
+    assert(list.length === expected, `${lesson.title}: expected ${expected} cards, got ${list.length}`);
     list.forEach((c, i) => assert(c.order === i + 1, `${lesson.title}: card order gap at ${i + 1}`));
   }
 
-  const audioRe = /^\/audio\/es\/[a-z0-9-]+-l\d-\d\.mp3$/;
+  const audioRe = /^\/audio\/es\/[a-z0-9-]+-l\d+-\d+\.mp3$/;
   for (const c of cards) {
     const label = `${c.topic}/${c.targetText}`;
     assert(c.targetText.length > 0 && c.translation.length > 0, `${label}: missing text/translation`);

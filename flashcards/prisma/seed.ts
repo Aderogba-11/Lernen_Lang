@@ -44,21 +44,21 @@ type ModuleSeed = {
 
 const translation = (source: string, expected: string, accept: string[] = []): ExerciseSeed => ({
   type: "WRITING",
-  prompt: `Translate to Spanish: ${source}`,
+  prompt: "Translate to Spanish:",
   content: { kind: "translation", source },
   answer: { expected, accept },
 });
 
 const fillBlank = (sentence: string, hint: string, expected: string, accept: string[] = []): ExerciseSeed => ({
   type: "WRITING",
-  prompt: `Fill in the blank: ${sentence}`,
+  prompt: "Fill in the blank:",
   content: { kind: "fill-blank", sentence, hint },
   answer: { expected, accept },
 });
 
 const wordOrder = (words: string[], expected: string): ExerciseSeed => ({
   type: "WRITING",
-  prompt: `Put the words in order: ${words.join(" / ")}`,
+  prompt: "Put the words in order:",
   content: { kind: "word-order", words },
   answer: { expected },
 });
@@ -109,10 +109,10 @@ const MODULES: ModuleSeed[] = [
     description: "Numbers, days and months, telling time",
     lessons: [
       {
-        title: "Numbers 0–31",
-        objective: "Count from 0 to 31 and use numbers in simple contexts.",
+        title: "Numbers 1–100",
+        objective: "Count from 1 to 100 and use numbers in simple contexts.",
         notes:
-          "1 uno · 2 dos · 3 tres · 4 cuatro · 5 cinco · 6 seis · 7 siete · 8 ocho · 9 nueve · 10 diez · 11 once · 12 doce · 13 trece · 14 catorce · 15 quince · 16 dieciséis · 17 diecisiete · 18 dieciocho · 19 diecinueve · 20 veinte · 21 veintiuno · 30 treinta · 31 treinta y uno.",
+          "1 uno · 2 dos · 3 tres · … · 10 diez · 11 once · 12 doce · … · 15 quince · 16 dieciséis · 17 diecisiete · 18 dieciocho · 19 diecinueve · 20 veinte. 21–29 are one word with veinti-: veintiuno, veintidós, veinticinco… From 30 on, join the ten with y: treinta y uno, cuarenta y dos, cincuenta y cinco… Tens: 30 treinta · 40 cuarenta · 50 cincuenta · 60 sesenta · 70 setenta · 80 ochenta · 90 noventa · 100 cien.",
         exercises: [
           translation("I have two brothers", "Tengo dos hermanos", ["tengo 2 hermanos"]),
           fillBlank("Tres + cuatro = ___", "the total", "siete"),
@@ -395,15 +395,47 @@ const CARDS: Record<string, CardSeed[]> = {
     card("¿dónde está…?", "where is…?", "DOHN-deh ehs-TAH", "phrase", "¿Dónde está el baño?", "Where is the bathroom?", 2),
     card("¿qué significa…?", "what does … mean?", "keh seeg-nee-FEE-kah", "phrase", "¿Qué significa «mesa»?", "What does «mesa» mean?", 3),
   ],
-  "Numbers 0–31": [
+  "Numbers 1–100": [
     card("uno", "one", "OO-noh", "number", "Solo queda uno.", "Only one is left."),
     card("dos", "two", "dohs", "number", "Quiero dos cafés.", "I want two coffees."),
     card("tres", "three", "trehs", "number", "Son las tres.", "It is three o'clock."),
     card("cuatro", "four", "KWAH-troh", "number", "Hay cuatro sillas.", "There are four chairs."),
     card("cinco", "five", "SEEN-koh", "number", "Tengo cinco primos.", "I have five cousins."),
+    card("seis", "six", "sayss", "number", "Mi número es el seis.", "My number is six."),
+    card("siete", "seven", "SYEH-teh", "number", "La semana tiene siete días.", "The week has seven days."),
+    card("ocho", "eight", "OH-choh", "number", "Son las ocho.", "It is eight o'clock."),
+    card("nueve", "nine", "NWEH-beh", "number", "Trabajo hasta las nueve.", "I work until nine."),
     card("diez", "ten", "dyes", "number", "Tengo diez euros.", "I have ten euros."),
-    card("veinte", "twenty", "BEYN-teh", "number", "El libro cuesta veinte euros.", "The book costs twenty euros.", 2),
+    card("once", "eleven", "OHN-seh", "number", "Llego a las once.", "I arrive at eleven.", 2),
+    card("doce", "twelve", "DOH-seh", "number", "Son las doce del mediodía.", "It is twelve noon.", 2),
+    card("trece", "thirteen", "TREH-seh", "number", "Hay trece alumnos en clase.", "There are thirteen students in class.", 2),
+    card("catorce", "fourteen", "kah-TOR-seh", "number", "Cumplo catorce en mayo.", "I turn fourteen in May.", 2),
     card("quince", "fifteen", "KEEN-seh", "number", "Tengo quince libros.", "I have fifteen books.", 2),
+    card("dieciséis", "sixteen", "dyeh-see-SAYSS", "number", "Mi puerta es la dieciséis.", "My door number is sixteen.", 2),
+    card("diecisiete", "seventeen", "dyeh-see-SYEH-teh", "number", "Mi casa es la diecisiete.", "My house is number seventeen.", 2),
+    card("dieciocho", "eighteen", "dyeh-see-OH-choh", "number", "El billete cuesta dieciocho euros.", "The ticket costs eighteen euros.", 2),
+    card("diecinueve", "nineteen", "dyeh-see-NWEH-beh", "number", "Mi primo tiene diecinueve años.", "My cousin is nineteen years old.", 2),
+    card("veinte", "twenty", "BEYN-teh", "number", "El libro cuesta veinte euros.", "The book costs twenty euros.", 2),
+    card("veintiuno", "twenty-one", "beyn-TEE-oo-noh", "number", "Su número es el veintiuno.", "Their number is twenty-one.", 2),
+    card("veintidós", "twenty-two", "beyn-tee-DOHS", "number", "El autobús veintidós va al centro.", "Bus twenty-two goes downtown.", 3),
+    card("veinticinco", "twenty-five", "beyn-tee-SEEN-koh", "number", "Tengo veinticinco años.", "I am twenty-five years old.", 2),
+    card("treinta", "thirty", "TREYN-tah", "number", "Corro treinta minutos al día.", "I run thirty minutes a day.", 2),
+    card("treinta y tres", "thirty-three", "TREYN-tah ee trehs", "number", "Mi tío tiene treinta y tres años.", "My uncle is thirty-three years old.", 3),
+    card("treinta y cinco", "thirty-five", "TREYN-tah ee SEEN-koh", "number", "La clase dura treinta y cinco minutos.", "The class lasts thirty-five minutes.", 3),
+    card("cuarenta", "forty", "kwah-REN-tah", "number", "El abrigo cuesta cuarenta euros.", "The coat costs forty euros.", 2),
+    card("cuarenta y cuatro", "forty-four", "kwah-REN-tah ee KWAH-troh", "number", "Marcamos cuarenta y cuatro puntos.", "We scored forty-four points.", 3),
+    card("cuarenta y cinco", "forty-five", "kwah-REN-tah ee SEEN-koh", "number", "El partido dura cuarenta y cinco minutos.", "The match lasts forty-five minutes.", 3),
+    card("cincuenta", "fifty", "seen-KWEHN-tah", "number", "La cena cuesta cincuenta euros.", "Dinner costs fifty euros.", 2),
+    card("cincuenta y cinco", "fifty-five", "seen-KWEHN-tah ee SEEN-koh", "number", "Mi madre tiene cincuenta y cinco años.", "My mother is fifty-five years old.", 3),
+    card("sesenta", "sixty", "seh-SEN-tah", "number", "La velocidad límite es sesenta.", "The speed limit is sixty.", 2),
+    card("sesenta y seis", "sixty-six", "seh-SEN-tah ee sayss", "number", "El apartamento es el sesenta y seis.", "The apartment is number sixty-six.", 3),
+    card("setenta", "seventy", "seh-TEN-tah", "number", "Mi abuelo tiene setenta años.", "My grandfather is seventy years old.", 2),
+    card("setenta y siete", "seventy-seven", "seh-TEN-tah ee SYEH-teh", "number", "Sumamos setenta y siete votos.", "We counted seventy-seven votes.", 3),
+    card("ochenta", "eighty", "oh-CHEN-tah", "number", "La casa vale ochenta mil euros.", "The house costs eighty thousand euros.", 2),
+    card("ochenta y ocho", "eighty-eight", "oh-CHEN-tah ee OH-choh", "number", "Mi abuela tiene ochenta y ocho años.", "My grandmother is eighty-eight years old.", 3),
+    card("noventa", "ninety", "noh-BEN-tah", "number", "El examen vale noventa puntos.", "The exam is worth ninety points.", 2),
+    card("noventa y nueve", "ninety-nine", "noh-BEN-tah ee NWEH-beh", "number", "Casi saco noventa y nueve.", "I almost got ninety-nine.", 3),
+    card("cien", "one hundred", "syen", "number", "El libro tiene cien páginas.", "The book has one hundred pages.", 2),
   ],
   "Days and Months": [
     card("lunes", "Monday", "LOO-nehs", "noun", "El lunes tengo clase.", "On Monday I have class."),
