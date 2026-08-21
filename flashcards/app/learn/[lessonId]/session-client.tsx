@@ -16,7 +16,8 @@ import {
   rateFlashcardAction,
   scoreReadingAction,
 } from "./actions";
-import { RATINGS, type LessonSession, type Rating } from "@/lib/sessions";
+import { RATINGS, type Rating } from "@/lib/ratings";
+import type { LessonSession } from "@/lib/sessions";
 import type { ReadingScore } from "@/lib/scoring";
 
 const RATING_LABELS: Record<Rating, string> = {

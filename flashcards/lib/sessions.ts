@@ -1,17 +1,14 @@
 import { db } from "@/lib/db";
 import type { ActionResult } from "@/lib/enrollments";
+import { isRating, RATINGS, type Rating } from "@/lib/ratings";
 import {
   scoreReading,
   type ReadingQuestion,
   type ReadingScore,
 } from "@/lib/scoring";
 
-export const RATINGS = ["AGAIN", "HARD", "GOOD", "EASY"] as const;
-export type Rating = (typeof RATINGS)[number];
-
-export function isRating(value: unknown): value is Rating {
-  return typeof value === "string" && (RATINGS as readonly string[]).includes(value);
-}
+export { isRating, RATINGS };
+export type { Rating };
 
 export type SessionCard = {
   id: string;
