@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/session";
 import { getActiveEnrollment } from "@/lib/enrollments";
 import { getPublishedCourse } from "@/lib/catalog";
+import { getCompletedLessonIds } from "@/lib/sessions";
 import {
   Card,
   CardContent,
@@ -68,6 +69,9 @@ export default async function LearnPage() {
     );
   }
 
+  const allLessons = course.modules.flatMap((module_) => module_.lessons);
+  const completedIds = new Set(await getCompletedLessonIds(user.id, allLessons.map((l) => l.id)));
+
   return (
     <main className="flex flex-1 flex-col items-center gap-8 bg-zinc-50 p-6 dark:bg-black">
       <div className="flex w-full max-w-2xl flex-col gap-2 text-center sm:text-left">
@@ -78,6 +82,9 @@ export default async function LearnPage() {
         <p className="text-sm text-zinc-500">
           {course.language.name} · {course.language.nativeName} ·{" "}
           {course.description}
+        </p>
+        <p className="text-sm text-zinc-500">
+          {completedIds.size} of {allLessons.length} lessons completed
         </p>
       </div>
 
@@ -95,33 +102,35 @@ export default async function LearnPage() {
             {module_.lessons.length > 0 && (
               <CardContent>
                 <ul className="flex flex-col gap-2">
-                  {module_.lessons.map((lesson) => (
-                    <li
-                      key={lesson.id}
-                      className="flex flex-col rounded-md border border-zinc-200 p-3 dark:border-zinc-800"
-                    >
-                      <span className="font-medium">
-                        Lesson {lesson.order}: {lesson.title}
-                      </span>
-                      {lesson.objective && (
-                        <span className="text-sm text-zinc-500">
-                          {lesson.objective}
-                        </span>
-                      )}
-                      <span className="mt-1 text-xs text-zinc-400">
-                        {lesson.exercises.length} exercise
-                        {lesson.exercises.length === 1 ? "" : "s"}
-                      </span>
-                    </li>
-                  ))}
+                  {module_.lessons.map((lesson) => {
+                    const isCompleted = completedIds.has(lesson.id);
+                    return (
+                      <li key={lesson.id}>
+                        <Link
+                          href={`/learn/${lesson.id}`}
+                          className="flex flex-col rounded-md border border-zinc-200 p-3 transition-colors hover:border-zinc-400 dark:border-zinc-800 dark:hover:border-zinc-600"
+                        >
+                          <span className="flex items-center gap-2 font-medium">
+                            Lesson {lesson.order}: {lesson.title}
+                            {isCompleted && <Badge>✓</Badge>}
+                          </span>
+                          {lesson.objective && (
+                            <span className="text-sm text-zinc-500">
+                              {lesson.objective}
+                            </span>
+                          )}
+                          <span className="mt-1 text-xs text-zinc-400">
+                            {isCompleted ? "Completed — practice again" : "Start lesson"}
+                          </span>
+                        </Link>
+                      </li>
+                    );
+                  })}
                 </ul>
               </CardContent>
             )}
           </Card>
         ))}
-        <p className="text-center text-sm text-zinc-500">
-          Interactive lessons arrive with the learning session phase.
-        </p>
       </section>
     </main>
   );
