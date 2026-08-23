@@ -1,9 +1,14 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-const SESSION_COOKIE = "better-auth.session_token";
+const SESSION_COOKIES = [
+  "better-auth.session_token",
+  "__Secure-better-auth.session_token",
+];
 
 export function proxy(request: NextRequest) {
-  const hasSessionCookie = request.cookies.has(SESSION_COOKIE);
+  const hasSessionCookie = SESSION_COOKIES.some((name) =>
+    request.cookies.has(name),
+  );
   const { pathname } = request.nextUrl;
 
   if (pathname.startsWith("/account") && !hasSessionCookie) {
