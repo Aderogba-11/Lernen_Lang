@@ -252,8 +252,7 @@ Phase exit: The learner can immediately see how much of Spanish A1 has been comp
 Phase exit: Lernen Lang has a functional review foundation without locking the application into one future spaced-repetition algorithm.
 
 
-
-
+## Phase 14: Xp, Streaks and achievements
 | ID | Atomic Step | What to Implement | Done When |
 |---|---|---|---|
 | LL-130 | Create XP ledger | Store XP events rather than relying only on a single total | XP history persists |
