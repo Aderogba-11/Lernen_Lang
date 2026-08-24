@@ -30,6 +30,8 @@ model User {
   languages         UserLanguage[]
   lessonProgress    UserProgress[]
   flashcardProgress FlashcardProgress[]
+  exerciseAttempts  ExerciseAttempt[]
+  exerciseProgress  ExerciseProgress[]
 }
 
 model Session {
@@ -148,6 +150,8 @@ model Lesson {
   exercises  Exercise[]
   flashcards Flashcard[]
   progress   UserProgress[]
+  exerciseAttempts  ExerciseAttempt[]
+  exerciseProgress  ExerciseProgress[]
 
   @@unique([moduleId, order])
 }
@@ -162,7 +166,9 @@ model Exercise {
   order    Int
   status   String  @default("DRAFT")
 
-  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  lesson    Lesson             @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  attempts  ExerciseAttempt[]
+  progress  ExerciseProgress[]
 
   @@unique([lessonId, order])
 }
@@ -235,4 +241,49 @@ model FlashcardProgress {
   flashcard Flashcard @relation(fields: [flashcardId], references: [id], onDelete: Cascade)
 
   @@unique([userId, flashcardId])
+}
+
+// ---------------------------------------------------------------------------
+// Exercise answer persistence (Phase 11)
+// ---------------------------------------------------------------------------
+
+model ExerciseAttempt {
+  id         String   @id @default(cuid())
+  userId     String
+  exerciseId String
+  lessonId   String
+  response   Json
+  score      Json
+  correct    Int?
+  total      Int?
+  passed     Boolean
+  createdAt  DateTime @default(now())
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  exercise Exercise @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+  lesson   Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@index([userId, exerciseId])
+  @@index([userId, lessonId])
+  @@index([userId, createdAt])
+}
+
+model ExerciseProgress {
+  id            String    @id @default(cuid())
+  userId        String
+  exerciseId    String
+  lessonId      String
+  attemptCount  Int       @default(0)
+  latestPassed  Boolean?
+  bestCorrect   Int?
+  bestTotal     Int?
+  completed     Boolean   @default(false)
+  lastAttemptAt DateTime?
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  exercise Exercise @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+  lesson   Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, exerciseId])
+  @@index([userId, lessonId])
 }

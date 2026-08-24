@@ -75,9 +75,14 @@ export default async function LearnPage() {
   return (
     <main className="flex flex-1 flex-col items-center gap-8 bg-zinc-50 p-6 dark:bg-black">
       <div className="flex w-full max-w-2xl flex-col gap-2 text-center sm:text-left">
-        <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-semibold tracking-tight">{course.title}</h1>
-          <Badge>{course.level.code}</Badge>
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-semibold tracking-tight">{course.title}</h1>
+            <Badge>{course.level.code}</Badge>
+          </div>
+          <Button asChild variant="outline" size="sm">
+            <Link href="/progress">My progress</Link>
+          </Button>
         </div>
         <p className="text-sm text-zinc-500">
           {course.language.name} · {course.language.nativeName} ·{" "}

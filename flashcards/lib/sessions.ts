@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { Prisma } from "../app/generated/prisma/client";
 import type { ActionResult } from "@/lib/enrollments";
 import { isRating, RATINGS, type Rating } from "@/lib/ratings";
 import {
@@ -7,6 +8,72 @@ import {
   type ReadingQuestion,
   type ReadingScore,
 } from "@/lib/scoring";
+
+type AttemptInput = {
+  userId: string;
+  lessonId: string;
+  exerciseId: string;
+  response: Prisma.InputJsonValue;
+  score: Prisma.InputJsonValue;
+  correct: number | null;
+  total: number | null;
+  passed: boolean;
+};
+
+async function recordAttempt(input: AttemptInput): Promise<void> {
+  const { userId, lessonId, exerciseId } = input;
+  const now = new Date();
+  await db.$transaction(async (tx) => {
+    await tx.exerciseAttempt.create({
+      data: {
+        userId,
+        exerciseId,
+        lessonId,
+        response: input.response,
+        score: input.score,
+        correct: input.correct,
+        total: input.total,
+        passed: input.passed,
+      },
+    });
+
+    const existing = await tx.exerciseProgress.findUnique({
+      where: { userId_exerciseId: { userId, exerciseId } },
+    });
+
+    if (!existing) {
+      await tx.exerciseProgress.create({
+        data: {
+          userId,
+          exerciseId,
+          lessonId,
+          attemptCount: 1,
+          latestPassed: input.passed,
+          bestCorrect: input.correct,
+          bestTotal: input.total,
+          completed: input.passed,
+          lastAttemptAt: now,
+        },
+      });
+      return;
+    }
+
+    await tx.exerciseProgress.update({
+      where: { id: existing.id },
+      data: {
+        attemptCount: { increment: 1 },
+        latestPassed: input.passed,
+        bestCorrect:
+          input.correct !== null
+            ? Math.max(existing.bestCorrect ?? 0, input.correct)
+            : undefined,
+        bestTotal: input.total !== null ? input.total : undefined,
+        completed: existing.completed || input.passed ? true : undefined,
+        lastAttemptAt: now,
+      },
+    });
+  });
+}
 
 export { isRating, RATINGS };
 export type { Rating };
@@ -332,6 +399,17 @@ export async function scoreLessonReading(
     return { ok: false, error: scored.error };
   }
 
+  await recordAttempt({
+    userId,
+    lessonId: lesson.id,
+    exerciseId,
+    response: selections,
+    score: { results: scored.results },
+    correct: scored.correct,
+    total: scored.total,
+    passed: scored.correct === scored.total,
+  });
+
   return { ok: true, ...scored };
 }
 
@@ -372,6 +450,19 @@ export async function scoreLessonWriting(
   }
 
   const correct = scoreWriting(answer.expected, answer.accept ?? [], response);
+  const passed = correct;
+
+  await recordAttempt({
+    userId,
+    lessonId: lesson.id,
+    exerciseId,
+    response,
+    score: { expected: answer.expected },
+    correct: passed ? 1 : 0,
+    total: 1,
+    passed,
+  });
+
   return { ok: true, correct, expected: answer.expected };
 }
 
@@ -412,6 +503,19 @@ export async function scoreLessonSpeaking(
   }
 
   const correct = scoreWriting(content.targetText, [], transcript);
+  const passed = correct;
+
+  await recordAttempt({
+    userId,
+    lessonId: lesson.id,
+    exerciseId,
+    response: transcript,
+    score: { expected: content.targetText },
+    correct: passed ? 1 : 0,
+    total: 1,
+    passed,
+  });
+
   return { ok: true, correct, expected: content.targetText };
 }
 
@@ -448,6 +552,17 @@ export async function scoreLessonListening(
   if ("error" in scored) {
     return { ok: false, error: scored.error };
   }
+
+  await recordAttempt({
+    userId,
+    lessonId: lesson.id,
+    exerciseId,
+    response: selections,
+    score: { results: scored.results },
+    correct: scored.correct,
+    total: scored.total,
+    passed: scored.correct === scored.total,
+  });
 
   return { ok: true, ...scored };
 }
