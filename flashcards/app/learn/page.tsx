@@ -80,9 +80,14 @@ export default async function LearnPage() {
             <h1 className="text-2xl font-semibold tracking-tight">{course.title}</h1>
             <Badge>{course.level.code}</Badge>
           </div>
-          <Button asChild variant="outline" size="sm">
-            <Link href="/progress">My progress</Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button asChild variant="outline" size="sm">
+              <Link href="/review">Review</Link>
+            </Button>
+            <Button asChild variant="outline" size="sm">
+              <Link href="/progress">My progress</Link>
+            </Button>
+          </div>
         </div>
         <p className="text-sm text-zinc-500">
           {course.language.name} · {course.language.nativeName} ·{" "}

@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { Prisma } from "../app/generated/prisma/client";
 import type { ActionResult } from "@/lib/enrollments";
 import { isRating, RATINGS, type Rating } from "@/lib/ratings";
+import { scheduleCard, type SrsState } from "@/lib/srs/scheduler";
 import {
   scoreMcq,
   scoreWriting,
@@ -599,19 +600,42 @@ export async function rateFlashcard(
     return { ok: false, error: "You are not enrolled in this language." };
   }
 
+  const existing = await db.flashcardProgress.findUnique({
+    where: { userId_flashcardId: { userId, flashcardId } },
+    select: { state: true, intervalDays: true, easeFactor: true, lapses: true },
+  });
+
+  const now = new Date();
+  const scheduled = scheduleCard(
+    existing
+      ? { ...existing, state: existing.state as SrsState }
+      : null,
+    rating,
+  );
+
   await db.flashcardProgress.upsert({
     where: { userId_flashcardId: { userId, flashcardId } },
     update: {
       lastRating: rating,
       reviewCount: { increment: 1 },
-      lastReviewedAt: new Date(),
+      lastReviewedAt: now,
+      dueAt: new Date(now.getTime() + scheduled.intervalDays * 24 * 60 * 60 * 1000),
+      state: scheduled.state,
+      intervalDays: scheduled.intervalDays,
+      easeFactor: scheduled.easeFactor,
+      lapses: scheduled.lapses,
     },
     create: {
       userId,
       flashcardId,
       lastRating: rating,
       reviewCount: 1,
-      lastReviewedAt: new Date(),
+      lastReviewedAt: now,
+      dueAt: new Date(now.getTime() + scheduled.intervalDays * 24 * 60 * 60 * 1000),
+      state: scheduled.state,
+      intervalDays: scheduled.intervalDays,
+      easeFactor: scheduled.easeFactor,
+      lapses: scheduled.lapses,
     },
   });
 

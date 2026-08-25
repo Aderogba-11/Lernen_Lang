@@ -39,6 +39,9 @@ export type LearnerStats =
       cardsTouched: number;
       ratingAccuracy: number | null;
       attemptsTotal: number;
+      dueNow: number;
+      reviewsToday: number;
+      cardsInRotation: number;
       activity: ActivityDay[];
       modules: ModuleStat[];
       recent: RecentAttempt[];
@@ -76,9 +79,13 @@ export async function getLearnerStats(userId: string): Promise<LearnerStats> {
 
   const cards = await db.flashcard.findMany({
     where: { lessonId: { in: lessonIds }, status: "PUBLISHED" },
-    select: { id: true },
+    select: { id: true, lessonId: true },
   });
   const cardIds = cards.map((c) => c.id);
+
+  const now = new Date();
+  const todayStart = new Date(now);
+  todayStart.setHours(0, 0, 0, 0);
 
   const [
     completedLessons,
@@ -88,6 +95,7 @@ export async function getLearnerStats(userId: string): Promise<LearnerStats> {
     attemptsTotal,
     attemptDates,
     recent,
+    completedCardProgress,
   ] = await Promise.all([
     db.userProgress.findMany({
       where: { userId, lessonId: { in: lessonIds }, status: "COMPLETED" },
@@ -129,9 +137,18 @@ export async function getLearnerStats(userId: string): Promise<LearnerStats> {
         lesson: { select: { title: true } },
       },
     }),
+    db.flashcardProgress.findMany({
+      where: { userId, flashcardId: { in: cardIds } },
+      select: { flashcardId: true, state: true, dueAt: true, lastReviewedAt: true },
+    }),
   ]);
 
   const completedLessonIds = new Set(completedLessons.map((l) => l.lessonId));
+  const completedCardIds = new Set(
+    cards
+      .filter((c) => completedLessonIds.has(c.lessonId))
+      .map((c) => c.id),
+  );
   const progressByExercise = new Map(progressRows.map((p) => [p.exerciseId, p]));
 
   const activityMap = new Map<string, number>();
@@ -183,6 +200,25 @@ export async function getLearnerStats(userId: string): Promise<LearnerStats> {
     }).filter((s) => s.total > 0),
   }));
 
+  let dueNow = 0;
+  let reviewsToday = 0;
+  let cardsInRotation = 0;
+
+  for (const fp of completedCardProgress) {
+    if (!completedCardIds.has(fp.flashcardId)) continue;
+
+    if (fp.state === "REVIEW" || fp.state === "LEARNING") {
+      cardsInRotation++;
+      if (fp.dueAt && fp.dueAt <= now) {
+        dueNow++;
+      }
+    }
+
+    if (fp.lastReviewedAt && fp.lastReviewedAt >= todayStart) {
+      reviewsToday++;
+    }
+  }
+
   return {
     enrolled: true,
     languageName: enrollment.language.name,
@@ -192,6 +228,9 @@ export async function getLearnerStats(userId: string): Promise<LearnerStats> {
     cardsTouched: rated,
     ratingAccuracy: rated > 0 ? Math.round((good / rated) * 100) : null,
     attemptsTotal,
+    dueNow,
+    reviewsToday,
+    cardsInRotation,
     activity: [...activityMap.entries()].map(([date, count]) => ({
       date,
       count,

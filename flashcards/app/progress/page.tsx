@@ -100,6 +100,17 @@ export default async function ProgressPage() {
         </Button>
       </div>
 
+      <div className="flex w-full max-w-4xl items-center justify-between gap-4">
+        {stats.dueNow > 0 && (
+          <Button asChild>
+            <Link href="/review">Review {stats.dueNow} card{stats.dueNow === 1 ? "" : "s"}</Link>
+          </Button>
+        )}
+        <p className="text-sm text-zinc-500">
+          {stats.reviewsToday} card review{stats.reviewsToday === 1 ? "" : "s"} today
+        </p>
+      </div>
+
       <div className="grid w-full max-w-4xl grid-cols-2 gap-4 lg:grid-cols-4">
         <Tile
           label="Lessons completed"
@@ -112,11 +123,9 @@ export default async function ProgressPage() {
           sub="unique flashcards"
         />
         <Tile
-          label="Rating accuracy"
-          value={
-            stats.ratingAccuracy === null ? "—" : `${stats.ratingAccuracy}%`
-          }
-          sub="Good + Easy ratings"
+          label="Cards in rotation"
+          value={String(stats.cardsInRotation)}
+          sub="scheduled for review"
         />
         <Tile
           label="Exercise attempts"
