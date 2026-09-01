@@ -5,6 +5,7 @@ import { getLearnerStats } from "@/lib/stats";
 import { getGamificationSummary } from "@/lib/gamification";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { NotificationBell } from "@/components/notification-bell";
 import {
   Card,
   CardContent,
@@ -98,6 +99,7 @@ export default async function ProgressPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <NotificationBell />
           <Button asChild variant="outline">
             <Link href="/dashboard">Dashboard</Link>
           </Button>

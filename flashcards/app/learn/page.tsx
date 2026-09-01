@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { NotificationBell } from "@/components/notification-bell";
 
 export const metadata = { title: "Learn — Lernen Lang" };
 
@@ -61,6 +62,7 @@ export default async function LearnPage() {
             <Badge>{nav.levelCode}</Badge>
           </div>
           <div className="flex items-center gap-2">
+            <NotificationBell />
             <Button asChild variant="outline" size="sm">
               <Link href="/dashboard">Dashboard</Link>
             </Button>

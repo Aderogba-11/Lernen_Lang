@@ -35,6 +35,7 @@ model User {
   xpEvents          XpEvent[]
   gamification      UserGamification?
   achievements      UserAchievement[]
+  notifications     Notification[]
 }
 
 model Session {
@@ -349,4 +350,24 @@ model UserAchievement {
   def  AchievementDef   @relation(fields: [defId], references: [id], onDelete: Cascade)
 
   @@unique([userId, defId])
+}
+
+// ---------------------------------------------------------------------------
+// Notifications (Phase 17)
+// ---------------------------------------------------------------------------
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String
+  title     String
+  body      String?
+  link      String?
+  createdAt DateTime @default(now())
+  readAt    DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([userId, readAt])
 }

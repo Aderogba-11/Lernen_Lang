@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { createNotification } from "@/lib/notifications";
 
 export type AchievementCriteria = {
   type: string;
@@ -234,6 +235,17 @@ export async function evaluateAchievements(
       });
       newlyAwarded.push(def.code);
     }
+  }
+
+  for (const code of newlyAwarded) {
+    const def = defs.find((d) => d.code === code);
+    if (!def) continue;
+    await createNotification(userId, {
+      type: "ACHIEVEMENT",
+      title: `Achievement unlocked: ${def.title}`,
+      body: def.description,
+      link: "/progress",
+    });
   }
 
   return newlyAwarded;

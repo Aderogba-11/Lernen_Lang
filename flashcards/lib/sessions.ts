@@ -5,6 +5,7 @@ import { isRating, RATINGS, type Rating } from "@/lib/ratings";
 import { scheduleCard, type SrsState } from "@/lib/srs/scheduler";
 import { awardXp, XP_EXERCISE, XP_LESSON, XP_FLASHCARD } from "@/lib/xp";
 import { isLessonUnlocked } from "@/lib/course";
+import { createNotification } from "@/lib/notifications";
 import {
   scoreMcq,
   scoreWriting,
@@ -705,6 +706,24 @@ export async function completeLesson(userId: string, lessonId: string): Promise<
       refId: lessonId,
       now,
     });
+
+    const course = lesson.module.course;
+    const allLessons = await db.lesson.findMany({
+      where: { module: { courseId: course.id }, status: "PUBLISHED" },
+      select: { id: true },
+    });
+    const completed = await getCompletedLessonIds(
+      userId,
+      allLessons.map((l) => l.id),
+    );
+    if (allLessons.length > 0 && completed.length === allLessons.length) {
+      await createNotification(userId, {
+        type: "COURSE_COMPLETE",
+        title: `Course complete: ${course.title}`,
+        body: "You finished every lesson. Great work!",
+        link: "/learn",
+      });
+    }
   }
 
   return { ok: true };

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/session";
 import { getDashboardData } from "@/lib/dashboard";
+import { syncActionNotifications } from "@/lib/notifications";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,6 +13,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { SwitchLanguageButton } from "./switch-language-button";
+import { NotificationBell } from "@/components/notification-bell";
 
 export const metadata = { title: "Dashboard — Lernen Lang" };
 
@@ -77,6 +79,10 @@ export default async function DashboardPage() {
 
   const data = await getDashboardData(user.id);
 
+  if (data.enrolled) {
+    await syncActionNotifications(user.id);
+  }
+
   if (!data.enrolled) {
     return (
       <main className="flex flex-1 items-center justify-center bg-zinc-50 p-6 dark:bg-black">
@@ -124,6 +130,7 @@ export default async function DashboardPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <NotificationBell />
           <Button asChild variant="outline">
             <Link href="/learn">Browse courses</Link>
           </Button>
