@@ -2,7 +2,7 @@ import "dotenv/config";
 import { existsSync, statSync } from "node:fs";
 import path from "node:path";
 import { db } from "../lib/db";
-import { scoreLessonSpeaking, getSessionContent } from "../lib/sessions";
+import { scoreLessonSpeaking, getSessionContent, completeLesson } from "../lib/sessions";
 import { scoreWriting } from "../lib/scoring";
 import { SPEAKINGS } from "../prisma/speaking-content";
 import { startLanguageForUser } from "../lib/enrollments";
@@ -66,6 +66,11 @@ async function main() {
     assert(!unenrolled.ok, "unenrolled user should not score");
 
     assert((await startLanguageForUser(user.id, "es", "A1")).ok, "enrollment failed");
+
+    for (const prior of [module1.lessons[0]!, module1.lessons[1]!]) {
+      const pre = await completeLesson(user.id, prior.id);
+      assert(pre.ok, `pre-complete lesson ${prior.order} to unlock speaking lesson`);
+    }
 
     const empty = await scoreLessonSpeaking(user.id, lesson.id, exercise.id, "   ");
     assert(!empty.ok && empty.error.includes("speak"), "empty transcript should be rejected");

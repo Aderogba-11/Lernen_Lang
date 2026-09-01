@@ -5,6 +5,7 @@ import {
   scoreLessonListening,
   scoreLessonWriting,
   scoreLessonSpeaking,
+  completeLesson,
 } from "../lib/sessions";
 import { getLearnerStats } from "../lib/stats";
 import type { ReadingQuestion } from "../lib/scoring";
@@ -119,6 +120,10 @@ async function main() {
     assert(writingProgress.bestCorrect === 1 && writingProgress.bestTotal === 1, "writing binary scoring stored");
 
     // --- listening + speaking single passes ---
+    for (const prior of [lesson1, lesson2]) {
+      const pre = await completeLesson("phase11-user-a", prior.id);
+      assert(pre.ok, `pre-complete lesson ${prior.order} to unlock listening/speaking lessons`);
+    }
     const listeningEx = await exerciseOf(lesson2.id, "LISTENING");
     const listeningContent = listeningEx.content as { questions: ReadingQuestion[] };
     const listenRun = await scoreLessonListening(

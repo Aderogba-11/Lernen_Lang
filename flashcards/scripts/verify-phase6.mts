@@ -52,9 +52,11 @@ async function main() {
     });
     const draftSession = await getSessionContent(user.id, draft.id);
     assert("error" in draftSession, "draft lesson should be rejected");
-    const unrelatedCard = await db.flashcard.findFirstOrThrow({
-      where: { lessonId: otherLesson.id },
+    const lessonCards = await db.flashcard.findMany({
+      where: { lessonId: lesson.id, status: "PUBLISHED" },
+      orderBy: { order: "asc" },
     });
+    const unrelatedCard = lessonCards[1] ?? lessonCards[0]!;
     const draftRate = await rateFlashcard(user.id, unrelatedCard.id, "GOOD");
     assert(draftRate.ok, "rating a published card should work");
     await db.lesson.delete({ where: { id: draft.id } });

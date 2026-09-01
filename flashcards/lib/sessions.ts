@@ -4,6 +4,7 @@ import type { ActionResult } from "@/lib/enrollments";
 import { isRating, RATINGS, type Rating } from "@/lib/ratings";
 import { scheduleCard, type SrsState } from "@/lib/srs/scheduler";
 import { awardXp, XP_EXERCISE, XP_LESSON, XP_FLASHCARD } from "@/lib/xp";
+import { isLessonUnlocked } from "@/lib/course";
 import {
   scoreMcq,
   scoreWriting,
@@ -211,6 +212,10 @@ async function loadAccessibleLesson(
   });
   if (!enrollment) {
     return { error: "You are not enrolled in this language." };
+  }
+
+  if (!(await isLessonUnlocked(userId, lesson.id))) {
+    return { error: "Complete earlier lessons to unlock this one." };
   }
 
   return lesson;
@@ -618,6 +623,13 @@ export async function rateFlashcard(
   });
   if (!enrollment) {
     return { ok: false, error: "You are not enrolled in this language." };
+  }
+
+  if (!(await isLessonUnlocked(userId, flashcard.lesson.id))) {
+    return {
+      ok: false,
+      error: "Complete earlier lessons to unlock this one.",
+    };
   }
 
   const existing = await db.flashcardProgress.findUnique({

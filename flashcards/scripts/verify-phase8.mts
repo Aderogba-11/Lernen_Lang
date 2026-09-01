@@ -2,7 +2,7 @@ import "dotenv/config";
 import { existsSync, statSync } from "node:fs";
 import path from "node:path";
 import { db } from "../lib/db";
-import { scoreLessonListening, getSessionContent } from "../lib/sessions";
+import { scoreLessonListening, getSessionContent, completeLesson } from "../lib/sessions";
 import { scoreMcq } from "../lib/scoring";
 import { LISTENINGS } from "../prisma/listening-content";
 import { startLanguageForUser } from "../lib/enrollments";
@@ -68,6 +68,9 @@ async function main() {
     assert(!unenrolled.ok, "unenrolled user should not score");
 
     assert((await startLanguageForUser(user.id, "es", "A1")).ok, "enrollment failed");
+
+    const pre = await completeLesson(user.id, module1.lessons[0]!.id);
+    assert(pre.ok, "pre-complete lesson 1 to unlock listening lesson");
 
     const perfect = await scoreLessonListening(
       user.id,
