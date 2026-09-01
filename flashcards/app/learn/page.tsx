@@ -82,6 +82,9 @@ export default async function LearnPage() {
           </div>
           <div className="flex items-center gap-2">
             <Button asChild variant="outline" size="sm">
+              <Link href="/dashboard">Dashboard</Link>
+            </Button>
+            <Button asChild variant="outline" size="sm">
               <Link href="/review">Review</Link>
             </Button>
             <Button asChild variant="outline" size="sm">

@@ -20,7 +20,7 @@ export default async function Home() {
         <div className="flex w-full flex-col gap-3 sm:flex-row sm:justify-center">
           {user ? (
             <Button asChild className="w-full sm:w-auto">
-              <Link href="/account">Continue as {user.name}</Link>
+              <Link href="/dashboard">Continue as {user.name}</Link>
             </Button>
           ) : (
             <>

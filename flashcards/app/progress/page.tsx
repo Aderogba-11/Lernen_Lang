@@ -97,9 +97,14 @@ export default async function ProgressPage() {
             {stats.languageName} · {stats.courseTitle}
           </p>
         </div>
-        <Button asChild variant="outline">
-          <Link href="/learn">Back to course</Link>
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button asChild variant="outline">
+            <Link href="/dashboard">Dashboard</Link>
+          </Button>
+          <Button asChild variant="outline">
+            <Link href="/learn">Back to course</Link>
+          </Button>
+        </div>
       </div>
 
       <div className="flex w-full max-w-4xl items-center justify-between gap-4">

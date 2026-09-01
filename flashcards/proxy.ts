@@ -11,17 +11,27 @@ export function proxy(request: NextRequest) {
   );
   const { pathname } = request.nextUrl;
 
-  if (pathname.startsWith("/account") && !hasSessionCookie) {
+  if (
+    (pathname.startsWith("/account") || pathname.startsWith("/dashboard")) &&
+    !hasSessionCookie
+  ) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
   if ((pathname === "/login" || pathname === "/register") && hasSessionCookie) {
-    return NextResponse.redirect(new URL("/account", request.url));
+    return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/account/:path*", "/languages/:path*", "/learn", "/login", "/register"],
+  matcher: [
+    "/account/:path*",
+    "/dashboard/:path*",
+    "/languages/:path*",
+    "/learn",
+    "/login",
+    "/register",
+  ],
 };
