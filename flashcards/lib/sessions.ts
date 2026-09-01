@@ -3,6 +3,7 @@ import { Prisma } from "../app/generated/prisma/client";
 import type { ActionResult } from "@/lib/enrollments";
 import { isRating, RATINGS, type Rating } from "@/lib/ratings";
 import { scheduleCard, type SrsState } from "@/lib/srs/scheduler";
+import { awardXp, XP_EXERCISE, XP_LESSON, XP_FLASHCARD } from "@/lib/xp";
 import {
   scoreMcq,
   scoreWriting,
@@ -21,59 +22,78 @@ type AttemptInput = {
   passed: boolean;
 };
 
-async function recordAttempt(input: AttemptInput): Promise<void> {
+async function recordAttempt(input: AttemptInput): Promise<boolean> {
   const { userId, lessonId, exerciseId } = input;
   const now = new Date();
-  await db.$transaction(async (tx) => {
-    await tx.exerciseAttempt.create({
-      data: {
-        userId,
-        exerciseId,
-        lessonId,
-        response: input.response,
-        score: input.score,
-        correct: input.correct,
-        total: input.total,
-        passed: input.passed,
-      },
-    });
-
-    const existing = await tx.exerciseProgress.findUnique({
-      where: { userId_exerciseId: { userId, exerciseId } },
-    });
-
-    if (!existing) {
-      await tx.exerciseProgress.create({
+  let firstCompletion = false;
+  await db.$transaction(
+    async (tx) => {
+      await tx.exerciseAttempt.create({
         data: {
           userId,
           exerciseId,
           lessonId,
-          attemptCount: 1,
+          response: input.response,
+          score: input.score,
+          correct: input.correct,
+          total: input.total,
+          passed: input.passed,
+        },
+      });
+
+      const existing = await tx.exerciseProgress.findUnique({
+        where: { userId_exerciseId: { userId, exerciseId } },
+      });
+
+      if (!existing) {
+        firstCompletion = input.passed;
+        await tx.exerciseProgress.create({
+          data: {
+            userId,
+            exerciseId,
+            lessonId,
+            attemptCount: 1,
+            latestPassed: input.passed,
+            bestCorrect: input.correct,
+            bestTotal: input.total,
+            completed: input.passed,
+            lastAttemptAt: now,
+          },
+        });
+        return;
+      }
+
+      const wasCompleted = existing.completed;
+      if (input.passed && !wasCompleted) {
+        firstCompletion = true;
+      }
+      await tx.exerciseProgress.update({
+        where: { id: existing.id },
+        data: {
+          attemptCount: { increment: 1 },
           latestPassed: input.passed,
-          bestCorrect: input.correct,
-          bestTotal: input.total,
-          completed: input.passed,
+          bestCorrect:
+            input.correct !== null
+              ? Math.max(existing.bestCorrect ?? 0, input.correct)
+              : undefined,
+          bestTotal: input.total !== null ? input.total : undefined,
+          completed: existing.completed || input.passed ? true : undefined,
           lastAttemptAt: now,
         },
       });
-      return;
-    }
+    },
+    { maxWait: 60_000, timeout: 120_000 },
+  );
 
-    await tx.exerciseProgress.update({
-      where: { id: existing.id },
-      data: {
-        attemptCount: { increment: 1 },
-        latestPassed: input.passed,
-        bestCorrect:
-          input.correct !== null
-            ? Math.max(existing.bestCorrect ?? 0, input.correct)
-            : undefined,
-        bestTotal: input.total !== null ? input.total : undefined,
-        completed: existing.completed || input.passed ? true : undefined,
-        lastAttemptAt: now,
-      },
+  if (firstCompletion) {
+    await awardXp(userId, XP_EXERCISE, "EXERCISE", {
+      refType: "EXERCISE",
+      refId: exerciseId,
+      now,
     });
-  });
+  }
+
+  return firstCompletion;
 }
 
 export { isRating, RATINGS };
@@ -639,6 +659,12 @@ export async function rateFlashcard(
     },
   });
 
+  await awardXp(userId, XP_FLASHCARD, "FLASHCARD", {
+    refType: "FLASHCARD",
+    refId: flashcardId,
+    now,
+  });
+
   return { ok: true };
 }
 
@@ -649,11 +675,25 @@ export async function completeLesson(userId: string, lessonId: string): Promise<
   }
 
   const now = new Date();
+  const existing = await db.userProgress.findUnique({
+    where: { userId_lessonId: { userId, lessonId } },
+    select: { status: true },
+  });
+
+  const firstCompletion = existing?.status !== "COMPLETED";
   await db.userProgress.upsert({
     where: { userId_lessonId: { userId, lessonId } },
     update: { status: "COMPLETED", completedAt: now },
     create: { userId, lessonId, status: "COMPLETED", completedAt: now },
   });
+
+  if (firstCompletion) {
+    await awardXp(userId, XP_LESSON, "LESSON", {
+      refType: "LESSON",
+      refId: lessonId,
+      now,
+    });
+  }
 
   return { ok: true };
 }

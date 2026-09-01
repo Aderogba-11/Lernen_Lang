@@ -32,6 +32,9 @@ model User {
   flashcardProgress FlashcardProgress[]
   exerciseAttempts  ExerciseAttempt[]
   exerciseProgress  ExerciseProgress[]
+  xpEvents          XpEvent[]
+  gamification      UserGamification?
+  achievements      UserAchievement[]
 }
 
 model Session {
@@ -292,4 +295,58 @@ model ExerciseProgress {
 
   @@unique([userId, exerciseId])
   @@index([userId, lessonId])
+}
+
+// ---------------------------------------------------------------------------
+// Gamification (Phase 14): XP, streaks, achievements, learner level
+// ---------------------------------------------------------------------------
+
+model XpEvent {
+  id        String   @id @default(cuid())
+  userId    String
+  amount    Int
+  reason    String
+  refType   String?
+  refId     String?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([userId, reason])
+}
+
+model UserGamification {
+  id               String    @id @default(cuid())
+  userId           String    @unique
+  totalXp          Int       @default(0)
+  currentStreak    Int       @default(0)
+  longestStreak    Int       @default(0)
+  lastActivityDate DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model AchievementDef {
+  id          String @id @default(cuid())
+  code        String @unique
+  title       String
+  description String
+  icon        String?
+  criteria    Json
+  order       Int    @default(0)
+
+  awards UserAchievement[]
+}
+
+model UserAchievement {
+  id         String   @id @default(cuid())
+  userId     String
+  defId      String
+  awardedAt  DateTime @default(now())
+
+  user User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  def  AchievementDef   @relation(fields: [defId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, defId])
 }

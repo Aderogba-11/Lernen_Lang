@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/session";
 import { getLearnerStats } from "@/lib/stats";
+import { getGamificationSummary } from "@/lib/gamification";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -59,6 +60,7 @@ export default async function ProgressPage() {
   }
 
   const stats = await getLearnerStats(user.id);
+  const gam = await getGamificationSummary(user.id);
 
   if (!stats.enrolled) {
     return (
@@ -134,6 +136,45 @@ export default async function ProgressPage() {
         />
       </div>
 
+      <div className="grid w-full max-w-4xl grid-cols-2 gap-4 lg:grid-cols-4">
+        <Tile
+          label="XP"
+          value={String(gam.totalXp)}
+          sub={`Learner Level ${gam.level}`}
+        />
+        <Tile
+          label="Current streak"
+          value={`${gam.currentStreak} day${gam.currentStreak === 1 ? "" : "s"}`}
+          sub="consecutive study days"
+        />
+        <Tile
+          label="Longest streak"
+          value={`${gam.longestStreak} day${gam.longestStreak === 1 ? "" : "s"}`}
+          sub="best achieved"
+        />
+        <Card>
+          <CardHeader>
+            <CardDescription>Level {gam.level} progress</CardDescription>
+            <CardTitle className="text-3xl">
+              {gam.xpIntoLevel} / {gam.xpIntoLevel + gam.xpToNext}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-2 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
+              <div
+                className="h-full rounded-full bg-zinc-900 dark:bg-zinc-100"
+                style={{
+                  width: `${(gam.xpIntoLevel / (gam.xpIntoLevel + gam.xpToNext)) * 100}%`,
+                }}
+              />
+            </div>
+            <p className="mt-2 text-xs text-zinc-500">
+              {gam.xpToNext} XP to level {gam.level + 1}
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
       <Card className="w-full max-w-4xl">
         <CardHeader>
           <CardTitle>Activity</CardTitle>
@@ -206,6 +247,38 @@ export default async function ProgressPage() {
               </div>
             </div>
           ))}
+        </CardContent>
+      </Card>
+
+      <Card className="w-full max-w-4xl">
+        <CardHeader>
+          <CardTitle>Achievements</CardTitle>
+          <CardDescription>
+            Milestones you have unlocked while learning
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            {gam.achievements.map((a) => (
+              <div
+                key={a.code}
+                className={`flex flex-col items-center gap-1 rounded-lg border p-4 text-center ${
+                  a.earned
+                    ? "border-zinc-300 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900"
+                    : "border-dashed border-zinc-200 opacity-50 dark:border-zinc-800"
+                }`}
+              >
+                <span className="text-2xl">{a.icon}</span>
+                <span className="text-sm font-medium">{a.title}</span>
+                <span className="text-xs text-zinc-500">{a.description}</span>
+                {a.earned ? (
+                  <Badge>Unlocked</Badge>
+                ) : (
+                  <Badge variant="secondary">Locked</Badge>
+                )}
+              </div>
+            ))}
+          </div>
         </CardContent>
       </Card>
 

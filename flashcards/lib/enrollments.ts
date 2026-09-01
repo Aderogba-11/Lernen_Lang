@@ -49,24 +49,27 @@ export async function startLanguageForUser(
     };
   }
 
-  await db.$transaction(async (tx) => {
-    await tx.userLanguage.updateMany({
-      where: { userId },
-      data: { isActive: false },
-    });
-    await tx.userLanguage.upsert({
-      where: {
-        userId_languageId: { userId, languageId: language.id },
-      },
-      update: { courseId: course.id, isActive: true },
-      create: {
-        userId,
-        languageId: language.id,
-        courseId: course.id,
-        isActive: true,
-      },
-    });
-  });
+  await db.$transaction(
+    async (tx) => {
+      await tx.userLanguage.updateMany({
+        where: { userId },
+        data: { isActive: false },
+      });
+      await tx.userLanguage.upsert({
+        where: {
+          userId_languageId: { userId, languageId: language.id },
+        },
+        update: { courseId: course.id, isActive: true },
+        create: {
+          userId,
+          languageId: language.id,
+          courseId: course.id,
+          isActive: true,
+        },
+      });
+    },
+    { maxWait: 60_000, timeout: 120_000 },
+  );
 
   return { ok: true };
 }
@@ -86,16 +89,19 @@ export async function setActiveEnrollmentForUser(
     return { ok: false, error: "That course is no longer available." };
   }
 
-  await db.$transaction(async (tx) => {
-    await tx.userLanguage.updateMany({
-      where: { userId },
-      data: { isActive: false },
-    });
-    await tx.userLanguage.update({
-      where: { id: enrollment.id },
-      data: { isActive: true },
-    });
-  });
+  await db.$transaction(
+    async (tx) => {
+      await tx.userLanguage.updateMany({
+        where: { userId },
+        data: { isActive: false },
+      });
+      await tx.userLanguage.update({
+        where: { id: enrollment.id },
+        data: { isActive: true },
+      });
+    },
+    { maxWait: 60_000, timeout: 120_000 },
+  );
 
   return { ok: true };
 }
