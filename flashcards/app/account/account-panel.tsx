@@ -100,13 +100,13 @@ export function AccountPanel({
         <Separator className="my-6" />
         <div className="flex flex-col gap-2">
           <Button asChild variant="outline" className="w-full">
-            <Link href="/review">Review cards</Link>
-          </Button>
-          <Button asChild variant="outline" className="w-full">
-            <Link href="/progress">My progress</Link>
+            <Link href="/dashboard">Dashboard</Link>
           </Button>
           <Button asChild variant="outline" className="w-full">
             <Link href="/languages">My languages</Link>
+          </Button>
+          <Button asChild variant="outline" className="w-full">
+            <Link href="/review">Review cards</Link>
           </Button>
           <Button variant="outline" onClick={signOut} className="w-full">
             Sign out
