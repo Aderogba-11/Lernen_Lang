@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/session";
+import { isAdmin } from "@/lib/admin";
 import { getDashboardData } from "@/lib/dashboard";
 import { syncActionNotifications } from "@/lib/notifications";
 import { Badge } from "@/components/ui/badge";
@@ -112,6 +113,14 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
         <SignOutButton />
+        {isAdmin(user) && (
+          <Link
+            href="/admin"
+            className="text-sm text-zinc-500 underline underline-offset-4 hover:text-zinc-700 dark:hover:text-zinc-300"
+          >
+            Admin
+          </Link>
+        )}
       </main>
     );
   }
@@ -133,6 +142,11 @@ export default async function DashboardPage() {
         </div>
         <div className="flex items-center gap-2">
           <NotificationBell />
+          {isAdmin(user) && (
+            <Button asChild variant="outline">
+              <Link href="/admin">Admin</Link>
+            </Button>
+          )}
           <Button asChild variant="outline">
             <Link href="/learn">Browse courses</Link>
           </Button>
