@@ -13,6 +13,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { SwitchLanguageButton } from "./switch-language-button";
+import { SignOutButton } from "./sign-out-button";
 import { NotificationBell } from "@/components/notification-bell";
 
 export const metadata = { title: "Dashboard — Lernen Lang" };
@@ -110,6 +111,7 @@ export default async function DashboardPage() {
             )}
           </CardContent>
         </Card>
+        <SignOutButton />
       </main>
     );
   }
@@ -341,6 +343,8 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
       )}
+
+      <SignOutButton />
     </main>
   );
 }
