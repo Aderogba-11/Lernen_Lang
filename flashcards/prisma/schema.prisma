@@ -150,6 +150,7 @@ model Lesson {
   title     String
   objective String?
   notes     String?
+  audioUrl  String?
   order     Int
   status    String  @default("DRAFT")
 

@@ -123,36 +123,43 @@ export default async function ModulePage({
         {module_ && (
           <Card>
             <CardHeader>
-              <CardTitle>Lessons</CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle>Lessons</CardTitle>
+                <Button asChild size="sm">
+                  <Link href={`/admin/lessons/new?moduleId=${module_.id}`}>
+                    New lesson
+                  </Link>
+                </Button>
+              </div>
               <CardDescription>
                 {module_.lessons.length} lesson
-                {module_.lessons.length === 1 ? "" : "s"} — flashcards and
-                exercises come in Phase 18b.
+                {module_.lessons.length === 1 ? "" : "s"} — each lesson can hold
+                flashcards and exercises.
               </CardDescription>
             </CardHeader>
             <CardContent>
               {module_.lessons.length === 0 ? (
-                <p className="text-sm text-zinc-500">
-                  No lessons yet — lesson management arrives in Phase 18b.
-                </p>
+                <p className="text-sm text-zinc-500">No lessons yet.</p>
               ) : (
                 <ul className="flex flex-col gap-2">
                   {module_.lessons.map((lesson) => (
-                    <li
-                      key={lesson.id}
-                      className="flex items-center justify-between rounded-md border border-zinc-200 p-3 dark:border-zinc-800"
-                    >
-                      <span className="flex items-center gap-2 font-medium">
-                        <FolderIcon className="h-4 w-4 text-zinc-400" />
-                        <span className="text-zinc-300 dark:text-zinc-600">
-                          {lesson.order}.
+                    <li key={lesson.id}>
+                      <Link
+                        href={`/admin/lessons/${lesson.id}`}
+                        className="flex items-center justify-between rounded-md border border-zinc-200 p-3 transition-colors hover:border-zinc-400 dark:border-zinc-800 dark:hover:border-zinc-600"
+                      >
+                        <span className="flex items-center gap-2 font-medium">
+                          <FolderIcon className="h-4 w-4 text-zinc-400" />
+                          <span className="text-zinc-300 dark:text-zinc-600">
+                            {lesson.order}.
+                          </span>
+                          {lesson.title}
                         </span>
-                        {lesson.title}
-                      </span>
-                      <span className="flex items-center gap-2 text-xs text-zinc-400">
-                        <Badge variant="secondary">{lesson.status}</Badge>
-                        {lesson._count.flashcards + lesson._count.exercises} items
-                      </span>
+                        <span className="flex items-center gap-2 text-xs text-zinc-400">
+                          <Badge variant="secondary">{lesson.status}</Badge>
+                          {lesson._count.flashcards + lesson._count.exercises} items
+                        </span>
+                      </Link>
                     </li>
                   ))}
                 </ul>
