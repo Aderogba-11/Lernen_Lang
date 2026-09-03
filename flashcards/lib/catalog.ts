@@ -45,3 +45,38 @@ export async function getPublishedCourse(languageCode: string, levelCode: string
 export type PublishedCourse = NonNullable<
   Awaited<ReturnType<typeof getPublishedCourse>>
 >;
+
+export async function getAdminCatalogTree() {
+  return db.language.findMany({
+    orderBy: { name: "asc" },
+    select: {
+      id: true,
+      code: true,
+      name: true,
+      nativeName: true,
+      isActive: true,
+      courses: {
+        orderBy: { id: "asc" },
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          status: true,
+          level: { select: { id: true, code: true, name: true } },
+          modules: {
+            orderBy: { order: "asc" },
+            select: {
+              id: true,
+              title: true,
+              order: true,
+              lessons: {
+                orderBy: { order: "asc" },
+                select: { id: true, title: true, order: true, status: true },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+}

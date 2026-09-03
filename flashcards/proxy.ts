@@ -13,6 +13,7 @@ export function proxy(request: NextRequest) {
 
   if (
     (pathname.startsWith("/account") ||
+      pathname.startsWith("/admin") ||
       pathname.startsWith("/dashboard") ||
       pathname.startsWith("/notifications")) &&
     !hasSessionCookie
@@ -30,6 +31,7 @@ export function proxy(request: NextRequest) {
 export const config = {
   matcher: [
     "/account/:path*",
+    "/admin/:path*",
     "/dashboard/:path*",
     "/languages/:path*",
     "/learn",
