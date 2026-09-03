@@ -27,7 +27,6 @@ import {
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field";
-import { Separator } from "@/components/ui/separator";
 
 export function AccountPanel({
   initialName,
@@ -68,51 +67,64 @@ export function AccountPanel({
   }
 
   return (
-    <Card className="w-full max-w-md">
-      <CardHeader>
-        <CardTitle>Your account</CardTitle>
-        <CardDescription>
-          Member since{" "}
-          {new Date(createdAt).toLocaleDateString(undefined, {
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-          })}
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit(onSubmit)} noValidate>
-          <FieldGroup>
-            <Field>
-              <FieldLabel htmlFor="name">Name</FieldLabel>
-              <Input id="name" type="text" {...register("name")} />
-              {errors.name && <FieldError errors={[errors.name]} />}
-            </Field>
-            <Field>
-              <FieldLabel htmlFor="email">Email</FieldLabel>
-              <Input id="email" type="email" value={email} disabled />
-            </Field>
-            <Button type="submit" disabled={isPending || !isDirty}>
-              {isPending ? "Saving…" : "Save changes"}
+    <div className="flex w-full max-w-lg flex-col gap-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Your account</CardTitle>
+          <CardDescription>
+            Member since{" "}
+            {new Date(createdAt).toLocaleDateString(undefined, {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            })}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit(onSubmit)} noValidate>
+            <FieldGroup>
+              <Field>
+                <FieldLabel htmlFor="name">Name</FieldLabel>
+                <Input id="name" type="text" {...register("name")} />
+                {errors.name && <FieldError errors={[errors.name]} />}
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="email">Email</FieldLabel>
+                <Input id="email" type="email" value={email} disabled />
+              </Field>
+              <Button type="submit" disabled={isPending || !isDirty}>
+                {isPending ? "Saving…" : "Save changes"}
+              </Button>
+            </FieldGroup>
+          </form>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Navigate</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-3">
+          <div className="grid grid-cols-3 gap-3">
+            <Button asChild variant="outline" className="h-12">
+              <Link href="/dashboard">Dashboard</Link>
             </Button>
-          </FieldGroup>
-        </form>
-        <Separator className="my-6" />
-        <div className="flex flex-col gap-2">
-          <Button asChild variant="outline" className="w-full">
-            <Link href="/dashboard">Dashboard</Link>
-          </Button>
-          <Button asChild variant="outline" className="w-full">
-            <Link href="/languages">My languages</Link>
-          </Button>
-          <Button asChild variant="outline" className="w-full">
-            <Link href="/review">Review cards</Link>
-          </Button>
-          <Button variant="outline" onClick={signOut} className="w-full">
+            <Button asChild variant="outline" className="h-12">
+              <Link href="/languages">My languages</Link>
+            </Button>
+            <Button asChild variant="outline" className="h-12">
+              <Link href="/review">Review cards</Link>
+            </Button>
+          </div>
+          <Button
+            variant="destructive"
+            onClick={signOut}
+            className="h-12 w-full"
+          >
             Sign out
           </Button>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
