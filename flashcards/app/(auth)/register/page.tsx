@@ -7,7 +7,7 @@ export const metadata = { title: "Create account — Lernen Lang" };
 export default async function RegisterPage() {
   const user = await getSessionUser();
   if (user) {
-    redirect("/account");
+    redirect("/dashboard");
   }
   return <RegisterForm />;
 }

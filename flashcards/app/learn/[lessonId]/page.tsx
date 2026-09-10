@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/session";
 import { getSessionContent } from "@/lib/sessions";
+import { getNextLesson } from "@/lib/course";
 import {
   Card,
   CardContent,
@@ -43,6 +44,8 @@ export default async function LessonSessionPage({
     );
   }
 
+  const nextLesson = await getNextLesson(user.id, lessonId);
+
   return (
     <main className="flex flex-1 flex-col items-center gap-6 bg-zinc-50 p-4 sm:p-6 dark:bg-black">
       <div className="flex w-full max-w-md flex-col gap-1 text-center">
@@ -53,7 +56,7 @@ export default async function LessonSessionPage({
           <p className="text-sm text-zinc-500">{session.objective}</p>
         )}
       </div>
-      <SessionClient session={session} />
+      <SessionClient session={session} nextLesson={nextLesson} />
     </main>
   );
 }

@@ -155,6 +155,54 @@ export async function getCourseNavigation(
   };
 }
 
+export async function getNextLesson(
+  userId: string,
+  lessonId: string,
+): Promise<{ id: string; title: string } | null> {
+  const lesson = await db.lesson.findUnique({
+    where: { id: lessonId },
+    select: { id: true, module: { select: { id: true, courseId: true } } },
+  });
+  if (!lesson) return null;
+
+  const enrollment = await db.userLanguage.findFirst({
+    where: { userId, courseId: lesson.module.courseId },
+    select: { id: true },
+  });
+  if (!enrollment) return null;
+
+  const modules = await db.module.findMany({
+    where: { courseId: lesson.module.courseId },
+    orderBy: { order: "asc" },
+    select: {
+      id: true,
+      order: true,
+      lessons: {
+        where: { status: "PUBLISHED" },
+        orderBy: { order: "asc" },
+        select: { id: true, title: true },
+      },
+    },
+  });
+
+  const allLessonIds = modules.flatMap((m) => m.lessons.map((l) => l.id));
+  const completedRows = await db.userProgress.findMany({
+    where: { userId, lessonId: { in: allLessonIds }, status: "COMPLETED" },
+    select: { lessonId: true },
+  });
+  const completed = new Set(completedRows.map((r) => r.lessonId));
+  completed.add(lessonId);
+
+  for (const module_ of modules) {
+    for (const candidate of module_.lessons) {
+      if (!completed.has(candidate.id)) {
+        return { id: candidate.id, title: candidate.title };
+      }
+    }
+  }
+  return null;
+}
+
 export async function isLessonUnlocked(
   userId: string,
   lessonId: string,

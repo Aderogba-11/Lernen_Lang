@@ -7,7 +7,7 @@ export const metadata = { title: "Sign in — Lernen Lang" };
 export default async function LoginPage() {
   const user = await getSessionUser();
   if (user) {
-    redirect("/account");
+    redirect("/dashboard");
   }
   return <LoginForm />;
 }

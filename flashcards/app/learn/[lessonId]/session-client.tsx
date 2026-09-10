@@ -130,7 +130,13 @@ function speakFallback(text: string, langCode?: string) {
   window.speechSynthesis.speak(utterance);
 }
 
-export function SessionClient({ session }: { session: LessonSession }) {
+export function SessionClient({
+  session,
+  nextLesson = null,
+}: {
+  session: LessonSession;
+  nextLesson: { id: string; title: string } | null;
+}) {
   const [index, setIndex] = useState(0);
   const [revealed, setRevealed] = useState(false);
   const [phase, setPhase] = useState<"cards" | "writing" | "reading" | "listening" | "speaking">("cards");
@@ -269,24 +275,31 @@ export function SessionClient({ session }: { session: LessonSession }) {
             <span className="text-zinc-500">Accuracy (Good + Easy)</span>
             <Badge>{accuracy}%</Badge>
           </div>
-          <div className="flex gap-2">
-            <Button asChild variant="outline" className="flex-1">
-              <Link href="/learn">Back to course</Link>
-            </Button>
-            <Button
-              variant="outline"
-              className="flex-1"
-              onClick={() => {
-                setIndex(0);
-                setRevealed(false);
-                setPhase("cards");
-                setWritingIndex(0);
-                setCounts({ AGAIN: 0, HARD: 0, GOOD: 0, EASY: 0 });
-                setFinished(false);
-              }}
-            >
-              Practice again
-            </Button>
+          <div className="flex flex-col gap-2">
+            {nextLesson && (
+              <Button asChild className="w-full">
+                <Link href={`/learn/${nextLesson.id}`}>Next lesson</Link>
+              </Button>
+            )}
+            <div className="flex gap-2">
+              <Button asChild variant="outline" className="flex-1">
+                <Link href="/learn">Back to course</Link>
+              </Button>
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => {
+                  setIndex(0);
+                  setRevealed(false);
+                  setPhase("cards");
+                  setWritingIndex(0);
+                  setCounts({ AGAIN: 0, HARD: 0, GOOD: 0, EASY: 0 });
+                  setFinished(false);
+                }}
+              >
+                Practice again
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
