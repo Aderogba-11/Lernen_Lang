@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { toast } from "sonner";
-import { setActiveEnrollment } from "@/app/languages/actions";
+import { setActiveEnrollment } from "@/app/(app)/languages/actions";
 import { Button } from "@/components/ui/button";
 
 export function SwitchLanguageButton({

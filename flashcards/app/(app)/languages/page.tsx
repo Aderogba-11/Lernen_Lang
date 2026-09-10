@@ -39,14 +39,8 @@ export default async function LanguagesPage() {
 
   return (
     <main className="flex flex-1 flex-col items-center gap-10 bg-zinc-50 p-4 sm:p-6 dark:bg-black">
-      <div className="flex w-full max-w-2xl items-center justify-between">
+      <div className="flex w-full max-w-2xl">
         <h1 className="text-2xl font-semibold tracking-tight">Languages</h1>
-        <Link
-          href="/dashboard"
-          className="text-sm text-zinc-500 underline underline-offset-4 hover:text-zinc-700 dark:hover:text-zinc-300"
-        >
-          Dashboard
-        </Link>
       </div>
 
       <div className="w-full max-w-2xl">

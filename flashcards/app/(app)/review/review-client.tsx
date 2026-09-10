@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState, useTransition } from "react";
-import { rateReviewCard } from "@/app/review/actions";
+import { rateReviewCard } from "@/app/(app)/review/actions";
 import { RATINGS, type Rating } from "@/lib/ratings";
 import { Button } from "@/components/ui/button";
 import {

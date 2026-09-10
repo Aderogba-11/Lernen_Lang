@@ -16,7 +16,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { MarkAllReadButton, MarkReadButton } from "./mark-read";
 
 export const metadata = { title: "Notifications — Lernen Lang" };
@@ -64,12 +63,7 @@ export default async function NotificationsPage() {
               : "All caught up"}
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <MarkAllReadButton disabled={unreadCount === 0} />
-          <Button asChild variant="outline">
-            <Link href="/dashboard">Dashboard</Link>
-          </Button>
-        </div>
+        <MarkAllReadButton disabled={unreadCount === 0} />
       </div>
 
       <section className="flex w-full max-w-2xl flex-col gap-4">

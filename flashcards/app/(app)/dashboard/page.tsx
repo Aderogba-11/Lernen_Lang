@@ -15,7 +15,6 @@ import {
 } from "@/components/ui/card";
 import { SwitchLanguageButton } from "./switch-language-button";
 import { SignOutButton } from "./sign-out-button";
-import { NotificationBell } from "@/components/notification-bell";
 
 export const metadata = { title: "Dashboard — Lernen Lang" };
 
@@ -139,20 +138,6 @@ export default async function DashboardPage() {
               : ""}{" "}
             · {data.courseTitle} · Level {data.levelCode}
           </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <NotificationBell user={user} />
-          {isAdmin(user) && (
-            <Button asChild variant="outline">
-              <Link href="/admin">Admin</Link>
-            </Button>
-          )}
-          <Button asChild variant="outline">
-            <Link href="/learn">Browse courses</Link>
-          </Button>
-          <Button asChild variant="outline">
-            <Link href="/progress">Progress</Link>
-          </Button>
         </div>
       </div>
 
@@ -358,6 +343,14 @@ export default async function DashboardPage() {
         </Card>
       )}
 
+      {isAdmin(user) && (
+        <Link
+          href="/admin"
+          className="text-sm text-zinc-500 underline underline-offset-4 hover:text-zinc-700 dark:hover:text-zinc-300"
+        >
+          Admin
+        </Link>
+      )}
       <SignOutButton />
     </main>
   );

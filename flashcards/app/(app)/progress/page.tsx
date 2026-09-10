@@ -3,9 +3,10 @@ import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/session";
 import { getLearnerStats } from "@/lib/stats";
 import { getGamificationSummary } from "@/lib/gamification";
+import { getCourseNavigation } from "@/lib/course";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { NotificationBell } from "@/components/notification-bell";
+import { LockIcon } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -60,9 +61,10 @@ export default async function ProgressPage() {
     redirect("/login");
   }
 
-  const [stats, gam] = await Promise.all([
+  const [stats, gam, nav] = await Promise.all([
     getLearnerStats(user.id),
     getGamificationSummary(user.id),
+    getCourseNavigation(user.id),
   ]);
 
   if (!stats.enrolled) {
@@ -91,32 +93,44 @@ export default async function ProgressPage() {
       ? 0
       : Math.round((stats.lessonsCompleted / stats.lessonsTotal) * 100);
 
+  const navData = nav.enrolled ? nav : null;
+  const nextLessonTitle = navData?.nextLessonId
+    ? navData.modules
+        .flatMap((m) => m.lessons)
+        .find((l) => l.id === navData.nextLessonId)?.title
+    : undefined;
+
   return (
     <main className="flex flex-1 flex-col items-center gap-8 bg-zinc-50 p-4 sm:p-6 dark:bg-black">
-      <div className="flex w-full max-w-4xl items-center justify-between">
+      <div className="flex w-full max-w-4xl">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Progress</h1>
           <p className="text-sm text-zinc-500">
             {stats.languageName} · {stats.courseTitle}
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <NotificationBell user={user} />
-          <Button asChild variant="outline">
-            <Link href="/dashboard">Dashboard</Link>
-          </Button>
-          <Button asChild variant="outline">
-            <Link href="/learn">Back to course</Link>
-          </Button>
-        </div>
       </div>
 
-      <div className="flex w-full max-w-4xl items-center justify-between gap-4">
-        {stats.dueNow > 0 && (
-          <Button asChild>
-            <Link href="/review">Review {stats.dueNow} card{stats.dueNow === 1 ? "" : "s"}</Link>
-          </Button>
-        )}
+      <div className="flex w-full max-w-4xl flex-wrap items-center justify-between gap-4">
+        <div className="flex flex-wrap items-center gap-3">
+          {stats.dueNow > 0 && (
+            <Button asChild>
+              <Link href="/review">Review {stats.dueNow} card{stats.dueNow === 1 ? "" : "s"}</Link>
+            </Button>
+          )}
+          {navData?.nextLessonId && (
+            <Button asChild>
+              <Link href={`/learn/${navData.nextLessonId}`}>
+                Continue — {nextLessonTitle}
+              </Link>
+            </Button>
+          )}
+          {navData && !navData.nextLessonId && (
+            <Button asChild variant="outline">
+              <Link href="/learn">Course complete · review</Link>
+            </Button>
+          )}
+        </div>
         <p className="text-sm text-zinc-500">
           {stats.reviewsToday} card review{stats.reviewsToday === 1 ? "" : "s"} today
         </p>
@@ -219,48 +233,100 @@ export default async function ProgressPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
-          {stats.modules.length === 0 ? (
-            <p className="text-sm text-zinc-500">
-              Complete a lesson to see module breakdown.
-            </p>
-          ) : (
-            stats.modules.map((mod) => (
+          {navData && navData.modules.length > 0 ? (
+            navData.modules.map((m) => {
+              const skillStats = stats.modules.find((s) => s.id === m.id);
+              return (
             <div
-              key={mod.id}
+              key={m.id}
               className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-800"
             >
               <div className="mb-3 flex items-center justify-between">
                 <span className="font-medium">
-                  {mod.order}. {mod.title}
+                  {m.order}. {m.title}
                 </span>
                 <Badge variant="secondary">
-                  {mod.lessonsCompleted}/{mod.lessonsTotal} lessons
+                  {m.completed}/{m.total} lessons
                 </Badge>
               </div>
-              <div className="flex flex-wrap gap-2">
-                {mod.skills.map((skill) => (
-                  <Badge
-                    key={skill.skill}
-                    variant={skill.passed === skill.total ? "default" : "outline"}
-                  >
-                    {SKILL_LABELS[skill.skill] ?? skill.skill}:{" "}
-                    {skill.passed}/{skill.total}
-                  </Badge>
-                ))}
-              </div>
+              {skillStats && skillStats.skills.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {skillStats.skills.map((skill) => (
+                    <Badge
+                      key={skill.skill}
+                      variant={skill.passed === skill.total ? "default" : "outline"}
+                    >
+                      {SKILL_LABELS[skill.skill] ?? skill.skill}:{" "}
+                      {skill.passed}/{skill.total}
+                    </Badge>
+                  ))}
+                </div>
+              )}
               <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
                 <div
                   className="h-full rounded-full bg-zinc-900 dark:bg-zinc-100"
                   style={{
                     width:
-                      mod.lessonsTotal === 0
+                      m.total === 0
                         ? "0%"
-                        : `${(mod.lessonsCompleted / mod.lessonsTotal) * 100}%`,
+                        : `${(m.completed / m.total) * 100}%`,
                   }}
                 />
               </div>
+              <ul className="mt-3 flex flex-col gap-1">
+                {m.lessons.map((l) =>
+                  l.status === "LOCKED" ? (
+                    <li
+                      key={l.id}
+                      className="flex items-center justify-between gap-3 rounded-md px-2 py-1.5 text-sm"
+                    >
+                      <span className="flex min-w-0 items-center gap-2 text-zinc-400">
+                        <LockIcon className="h-3.5 w-3.5 shrink-0" />
+                        <span className="truncate">
+                          Lesson {l.order}: {l.title}
+                        </span>
+                      </span>
+                      <span className="shrink-0 text-xs text-zinc-400">
+                        Complete earlier lessons first
+                      </span>
+                    </li>
+                  ) : (
+                    <li key={l.id}>
+                      <Link
+                        href={`/learn/${l.id}`}
+                        className="flex items-center justify-between gap-3 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-900"
+                      >
+                        <span className="truncate font-medium">
+                          Lesson {l.order}: {l.title}
+                        </span>
+                        <Badge
+                          variant={
+                            l.status === "COMPLETED"
+                              ? "default"
+                              : l.status === "IN_PROGRESS"
+                                ? "outline"
+                                : "secondary"
+                          }
+                        >
+                          {l.status === "COMPLETED"
+                            ? "✓"
+                            : l.status === "IN_PROGRESS"
+                              ? "In progress"
+                              : "Start"}
+                        </Badge>
+                      </Link>
+                    </li>
+                  ),
+                )}
+              </ul>
             </div>
-          )))}
+              );
+            })
+          ) : (
+            <p className="text-sm text-zinc-500">
+              Complete a lesson to see module breakdown.
+            </p>
+          )}
         </CardContent>
       </Card>
 
