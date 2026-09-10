@@ -12,6 +12,7 @@ export type ReviewCard = {
   audioUrl: string | null;
   state: string;
   progressId: string | null;
+  languageCode: string;
 };
 
 export async function getReviewQueue(
@@ -23,6 +24,7 @@ export async function getReviewQueue(
       language: {
         select: {
           id: true,
+          code: true,
           courses: {
             select: {
               id: true,
@@ -109,6 +111,7 @@ export async function getReviewQueue(
         audioUrl: card.audioUrl,
         state: "NEW",
         progressId: null,
+        languageCode: enrollment!.language.code,
       });
       continue;
     }
@@ -123,6 +126,7 @@ export async function getReviewQueue(
         audioUrl: card.audioUrl,
         state: "NEW",
         progressId: progress.id,
+        languageCode: enrollment!.language.code,
       });
       continue;
     }
@@ -137,6 +141,7 @@ export async function getReviewQueue(
         audioUrl: card.audioUrl,
         state: progress.state,
         progressId: progress.id,
+        languageCode: enrollment!.language.code,
       });
     }
   }

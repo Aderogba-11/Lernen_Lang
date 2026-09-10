@@ -35,7 +35,7 @@ export default async function LearnPage() {
 
   if (!nav.enrolled) {
     return (
-      <main className="flex flex-1 items-center justify-center bg-zinc-50 p-6 dark:bg-black">
+      <main className="flex flex-1 items-center justify-center bg-zinc-50 p-4 sm:p-6 dark:bg-black">
         <Card className="w-full max-w-md">
           <CardHeader>
             <CardTitle>No active language</CardTitle>
@@ -54,7 +54,7 @@ export default async function LearnPage() {
   }
 
   return (
-    <main className="flex flex-1 flex-col items-center gap-8 bg-zinc-50 p-6 dark:bg-black">
+    <main className="flex flex-1 flex-col items-center gap-8 bg-zinc-50 p-4 sm:p-6 dark:bg-black">
       <div className="flex w-full max-w-2xl flex-col gap-2 text-center sm:text-left">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
@@ -62,7 +62,7 @@ export default async function LearnPage() {
             <Badge>{nav.levelCode}</Badge>
           </div>
           <div className="flex items-center gap-2">
-            <NotificationBell />
+            <NotificationBell user={user} />
             <Button asChild variant="outline" size="sm">
               <Link href="/dashboard">Dashboard</Link>
             </Button>

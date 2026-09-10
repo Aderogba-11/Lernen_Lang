@@ -33,7 +33,7 @@ export default async function AdminPage() {
   const tree = await getAdminCatalogTree();
 
   return (
-    <main className="flex flex-1 flex-col items-center gap-8 bg-zinc-50 p-6 dark:bg-black">
+    <main className="flex flex-1 flex-col items-center gap-8 bg-zinc-50 p-4 sm:p-6 dark:bg-black">
       <div className="flex w-full max-w-4xl items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Content management</h1>

@@ -117,6 +117,13 @@ export function RegisterForm() {
                 </Link>
               </FieldDescription>
             </FieldContent>
+            <FieldContent>
+              <FieldDescription>
+                <Link href="/" className="font-medium underline">
+                  ← Back to home
+                </Link>
+              </FieldDescription>
+            </FieldContent>
           </FieldGroup>
         </form>
       </CardContent>

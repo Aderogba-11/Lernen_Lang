@@ -73,15 +73,32 @@ export function ReviewSession({ queue }: { queue: ReviewCard[] }) {
     });
   }
 
-  function playAudio() {
-    if (card.audioUrl) {
-      const a = new Audio(card.audioUrl);
-      a.play().catch(() => {});
+  function playAudio(audioUrl: string | null, targetText: string, langCode: string) {
+    if (audioUrl) {
+      const a = new Audio(audioUrl);
+      a.addEventListener(
+        "error",
+        () => {
+          if (!("speechSynthesis" in window)) return;
+          const u = new SpeechSynthesisUtterance(targetText);
+          u.lang = langCode;
+          u.rate = 0.85;
+          window.speechSynthesis.speak(u);
+        },
+        { once: true },
+      );
+      a.play().catch(() => {
+        if (!("speechSynthesis" in window)) return;
+        const u = new SpeechSynthesisUtterance(targetText);
+        u.lang = langCode;
+        u.rate = 0.85;
+        window.speechSynthesis.speak(u);
+      });
       return;
     }
     if (!("speechSynthesis" in window)) return;
-    const u = new SpeechSynthesisUtterance(card.targetText);
-    u.lang = "es";
+    const u = new SpeechSynthesisUtterance(targetText);
+    u.lang = langCode;
     u.rate = 0.85;
     window.speechSynthesis.speak(u);
   }
@@ -164,7 +181,7 @@ export function ReviewSession({ queue }: { queue: ReviewCard[] }) {
           )}
         </div>
 
-        <Button variant="ghost" size="sm" onClick={playAudio}>
+        <Button variant="ghost" size="sm" onClick={() => playAudio(card.audioUrl, card.targetText, card.languageCode)}>
           Play audio
         </Button>
 

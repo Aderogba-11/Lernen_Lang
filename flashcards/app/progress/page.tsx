@@ -60,12 +60,14 @@ export default async function ProgressPage() {
     redirect("/login");
   }
 
-  const stats = await getLearnerStats(user.id);
-  const gam = await getGamificationSummary(user.id);
+  const [stats, gam] = await Promise.all([
+    getLearnerStats(user.id),
+    getGamificationSummary(user.id),
+  ]);
 
   if (!stats.enrolled) {
     return (
-      <main className="flex flex-1 items-center justify-center bg-zinc-50 p-6 dark:bg-black">
+      <main className="flex flex-1 items-center justify-center bg-zinc-50 p-4 sm:p-6 dark:bg-black">
         <Card className="w-full max-w-md">
           <CardHeader>
             <CardTitle>No active course</CardTitle>
@@ -90,7 +92,7 @@ export default async function ProgressPage() {
       : Math.round((stats.lessonsCompleted / stats.lessonsTotal) * 100);
 
   return (
-    <main className="flex flex-1 flex-col items-center gap-8 bg-zinc-50 p-6 dark:bg-black">
+    <main className="flex flex-1 flex-col items-center gap-8 bg-zinc-50 p-4 sm:p-6 dark:bg-black">
       <div className="flex w-full max-w-4xl items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Progress</h1>
@@ -99,7 +101,7 @@ export default async function ProgressPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <NotificationBell />
+          <NotificationBell user={user} />
           <Button asChild variant="outline">
             <Link href="/dashboard">Dashboard</Link>
           </Button>
@@ -217,7 +219,12 @@ export default async function ProgressPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
-          {stats.modules.map((mod) => (
+          {stats.modules.length === 0 ? (
+            <p className="text-sm text-zinc-500">
+              Complete a lesson to see module breakdown.
+            </p>
+          ) : (
+            stats.modules.map((mod) => (
             <div
               key={mod.id}
               className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-800"
@@ -253,7 +260,7 @@ export default async function ProgressPage() {
                 />
               </div>
             </div>
-          ))}
+          )))}
         </CardContent>
       </Card>
 

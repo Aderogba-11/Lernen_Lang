@@ -27,7 +27,7 @@ export default async function LessonSessionPage({
 
   if ("error" in session) {
     return (
-      <main className="flex flex-1 items-center justify-center bg-zinc-50 p-6 dark:bg-black">
+      <main className="flex flex-1 items-center justify-center bg-zinc-50 p-4 sm:p-6 dark:bg-black">
         <Card className="w-full max-w-md">
           <CardHeader>
             <CardTitle>Lesson unavailable</CardTitle>
@@ -44,7 +44,7 @@ export default async function LessonSessionPage({
   }
 
   return (
-    <main className="flex flex-1 flex-col items-center gap-6 bg-zinc-50 p-6 dark:bg-black">
+    <main className="flex flex-1 flex-col items-center gap-6 bg-zinc-50 p-4 sm:p-6 dark:bg-black">
       <div className="flex w-full max-w-md flex-col gap-1 text-center">
         <h1 className="text-xl font-semibold tracking-tight">
           {session.lessonTitle}

@@ -107,25 +107,25 @@ function useMcq(count: number) {
   return { selections, result, error, submitting, allAnswered, select, setResult, setError, startSubmit };
 }
 
-function playCardAudio(targetText: string, audioUrl: string | null) {
+function playCardAudio(targetText: string, audioUrl: string | null, langCode?: string) {
   if (audioUrl) {
     const audio = new Audio(audioUrl);
-    audio.addEventListener("error", () => speakFallback(targetText), { once: true });
+    audio.addEventListener("error", () => speakFallback(targetText, langCode), { once: true });
     const playback = audio.play();
     if (playback) {
-      playback.catch(() => speakFallback(targetText));
+      playback.catch(() => speakFallback(targetText, langCode));
     }
     return;
   }
-  speakFallback(targetText);
+  speakFallback(targetText, langCode);
 }
 
-function speakFallback(text: string) {
+function speakFallback(text: string, langCode?: string) {
   if (typeof window === "undefined" || !("speechSynthesis" in window)) {
     return;
   }
   const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = "es-ES";
+  utterance.lang = langCode || "es-ES";
   window.speechSynthesis.cancel();
   window.speechSynthesis.speak(utterance);
 }
@@ -335,6 +335,7 @@ export function SessionClient({ session }: { session: LessonSession }) {
         lessonId={session.lessonId}
         speaking={session.speaking}
         pending={pending}
+        languageCode={session.languageCode}
         onDone={handleSpeakingDone}
       />
     );
@@ -389,7 +390,7 @@ export function SessionClient({ session }: { session: LessonSession }) {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => playCardAudio(card.targetText, card.audioUrl)}
+          onClick={() => playCardAudio(card.targetText, card.audioUrl, session.languageCode)}
         >
           Play audio
         </Button>
@@ -507,11 +508,13 @@ function SpeakingStep({
   lessonId,
   speaking,
   pending,
+  languageCode,
   onDone,
 }: {
   lessonId: string;
   speaking: SessionSpeaking;
   pending: boolean;
+  languageCode: string;
   onDone: () => void;
 }) {
   const [listening, setListening] = useState(false);
@@ -568,7 +571,7 @@ function SpeakingStep({
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => playCardAudio(speaking.targetText, speaking.audioUrl)}
+            onClick={() => playCardAudio(speaking.targetText, speaking.audioUrl, languageCode)}
           >
             Play audio
           </Button>
@@ -709,6 +712,7 @@ function ListeningStep({
   onDone: () => void;
 }) {
   const mcq = useMcq(listening.questions.length);
+  const [audioError, setAudioError] = useState(false);
 
   function handleSubmit() {
     if (!mcq.allAnswered || mcq.submitting || mcq.result) return;
@@ -731,7 +735,19 @@ function ListeningStep({
       </CardHeader>
       <CardContent className="flex flex-col gap-6">
         <div className="flex flex-col items-center gap-2 rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
-          <audio controls preload="none" src={listening.audioUrl} className="w-full" />
+          {audioError ? (
+            <p className="text-sm text-zinc-500">
+              Audio unavailable — please continue to the questions below.
+            </p>
+          ) : (
+            <audio
+              controls
+              preload="none"
+              src={listening.audioUrl}
+              className="w-full"
+              onError={() => setAudioError(true)}
+            />
+          )}
           <p className="text-xs text-zinc-400">
             Listen as many times as you need, then answer below.
           </p>

@@ -15,7 +15,9 @@ export function proxy(request: NextRequest) {
     (pathname.startsWith("/account") ||
       pathname.startsWith("/admin") ||
       pathname.startsWith("/dashboard") ||
-      pathname.startsWith("/notifications")) &&
+      pathname.startsWith("/notifications") ||
+      pathname.startsWith("/progress") ||
+      pathname.startsWith("/review")) &&
     !hasSessionCookie
   ) {
     return NextResponse.redirect(new URL("/login", request.url));
@@ -34,8 +36,10 @@ export const config = {
     "/admin/:path*",
     "/dashboard/:path*",
     "/languages/:path*",
-    "/learn",
+    "/learn/:path*",
     "/notifications/:path*",
+    "/progress/:path*",
+    "/review/:path*",
     "/login",
     "/register",
   ],

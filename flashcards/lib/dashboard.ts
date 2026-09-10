@@ -143,18 +143,19 @@ export async function getDashboardData(userId: string): Promise<DashboardData> {
     return { enrolled: false, hasEnrollments: true };
   }
 
-  const stats = await getLearnerStats(userId);
+  const [stats, completedIds] = await Promise.all([
+    getLearnerStats(userId),
+    (async () => {
+      const allLessonIds = course.modules.flatMap((m) => m.lessons.map((l) => l.id));
+      return new Set(await getCompletedLessonIds(userId, allLessonIds));
+    })(),
+  ]);
+
   if (!stats.enrolled) {
     return { enrolled: false, hasEnrollments: true };
   }
 
   const allLessons = course.modules.flatMap((module_) => module_.lessons);
-  const completedIds = new Set(
-    await getCompletedLessonIds(
-      userId,
-      allLessons.map((l) => l.id),
-    ),
-  );
   const lessonsCompleted = completedIds.size;
   const lessonsTotal = allLessons.length;
 

@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { BellIcon } from "lucide-react";
-import { getSessionUser } from "@/lib/session";
 import { getUnreadNotificationCount } from "@/lib/notifications";
 import { Button } from "@/components/ui/button";
 
-export async function NotificationBell() {
-  const user = await getSessionUser();
-  if (!user) return null;
+export async function NotificationBell({
+  user,
+}: {
+  user: { id: string };
+}) {
   const unread = await getUnreadNotificationCount(user.id);
 
   return (

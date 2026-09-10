@@ -87,7 +87,7 @@ export default async function DashboardPage() {
 
   if (!data.enrolled) {
     return (
-      <main className="flex flex-1 items-center justify-center bg-zinc-50 p-6 dark:bg-black">
+      <main className="flex flex-1 items-center justify-center bg-zinc-50 p-4 sm:p-6 dark:bg-black">
         <Card className="w-full max-w-md">
           <CardHeader>
             <CardTitle>
@@ -128,8 +128,8 @@ export default async function DashboardPage() {
   const { gamification: gam, dailyGoal } = data;
 
   return (
-    <main className="flex flex-1 flex-col items-center gap-8 bg-zinc-50 p-6 dark:bg-black">
-      <div className="flex w-full max-w-4xl items-center justify-between">
+    <main className="flex flex-1 flex-col items-center gap-8 bg-zinc-50 p-4 sm:p-6 dark:bg-black">
+      <div className="flex w-full max-w-4xl flex-wrap items-center justify-between gap-2">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
           <p className="text-sm text-zinc-500">
@@ -141,7 +141,7 @@ export default async function DashboardPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <NotificationBell />
+          <NotificationBell user={user} />
           {isAdmin(user) && (
             <Button asChild variant="outline">
               <Link href="/admin">Admin</Link>

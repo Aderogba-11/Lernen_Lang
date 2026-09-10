@@ -35,7 +35,7 @@ export default async function LanguageLevelPage({
   }));
 
   return (
-    <main className="flex flex-1 flex-col items-center gap-8 bg-zinc-50 p-6 dark:bg-black">
+    <main className="flex flex-1 flex-col items-center gap-8 bg-zinc-50 p-4 sm:p-6 dark:bg-black">
       <div className="flex w-full max-w-md flex-col gap-2">
         <h1 className="text-2xl font-semibold tracking-tight">
           {language.name}{" "}

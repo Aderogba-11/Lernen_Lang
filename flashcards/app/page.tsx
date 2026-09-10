@@ -6,7 +6,7 @@ export default async function Home() {
   const user = await getSessionUser();
 
   return (
-    <div className="flex flex-1 flex-col items-center justify-center bg-zinc-50 p-6 dark:bg-black">
+    <div className="flex flex-1 flex-col items-center justify-center bg-zinc-50 p-4 sm:p-6 dark:bg-black">
       <main className="flex w-full max-w-md flex-col items-center gap-8 text-center">
         <div className="flex flex-col gap-3">
           <h1 className="text-4xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">

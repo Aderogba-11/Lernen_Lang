@@ -2,16 +2,19 @@
 
 import { getSessionUser } from "@/lib/session";
 import { rateFlashcard } from "@/lib/sessions";
-import type { Rating } from "@/lib/ratings";
+import { rateFlashcardSchema } from "@/lib/validation";
 
 export async function rateReviewCard(
   flashcardId: string,
-  rating: Rating,
-): Promise<{ ok: boolean; error?: string }> {
+  rating: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const parsed = rateFlashcardSchema.safeParse({ flashcardId, rating });
+  if (!parsed.success) return { ok: false, error: "Invalid input." };
+
   const user = await getSessionUser();
   if (!user) {
     return { ok: false, error: "Not signed in." };
   }
 
-  return rateFlashcard(user.id, flashcardId, rating);
+  return rateFlashcard(user.id, parsed.data.flashcardId, parsed.data.rating);
 }
