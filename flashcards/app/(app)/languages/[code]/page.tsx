@@ -2,8 +2,9 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { getSessionUser } from "@/lib/session";
+import { getUserEnrollments } from "@/lib/enrollments";
 import { LEVEL_ORDER } from "./levels";
-import { LevelPicker, type LevelOption } from "./level-picker";
+import { LevelPicker, type LevelStatus, type LevelOption } from "./level-picker";
 import { Button } from "@/components/ui/button";
 
 export const metadata = { title: "Choose a level — Lernen Lang" };
@@ -28,11 +29,26 @@ export default async function LanguageLevelPage({
   });
   const availableCodes = new Set(publishedCourses.map((c) => c.level.code));
 
-  const levels: LevelOption[] = LEVEL_ORDER.map((level) => ({
-    code: level.code,
-    name: level.name,
-    available: availableCodes.has(level.code),
-  }));
+  const enrollments = await getUserEnrollments(user.id);
+  const enrollment = enrollments.find((e) => e.language.code === language.code);
+  const activeLevelCode =
+    enrollment?.isActive && enrollment.course
+      ? enrollment.course.level.code
+      : null;
+
+  const levels: LevelOption[] = LEVEL_ORDER.map((level) => {
+    const status: LevelStatus = enrollment
+      ? activeLevelCode === level.code
+        ? "active"
+        : "switch"
+      : "new";
+    return {
+      code: level.code,
+      name: level.name,
+      available: availableCodes.has(level.code),
+      status,
+    };
+  });
 
   return (
     <main className="flex flex-1 flex-col items-center gap-8 bg-zinc-50 p-4 sm:p-6 dark:bg-black">

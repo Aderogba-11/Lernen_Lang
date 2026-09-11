@@ -1,7 +1,6 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -100,31 +99,13 @@ export function AccountPanel({
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Navigate</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-3">
-          <div className="grid grid-cols-3 gap-3">
-            <Button asChild variant="outline" className="h-12">
-              <Link href="/dashboard">Dashboard</Link>
-            </Button>
-            <Button asChild variant="outline" className="h-12">
-              <Link href="/languages">My languages</Link>
-            </Button>
-            <Button asChild variant="outline" className="h-12">
-              <Link href="/review">Review cards</Link>
-            </Button>
-          </div>
-          <Button
-            variant="destructive"
-            onClick={signOut}
-            className="h-12 w-full"
-          >
-            Sign out
-          </Button>
-        </CardContent>
-      </Card>
+      <Button
+        variant="destructive"
+        onClick={signOut}
+        className="h-12 w-full"
+      >
+        Sign out
+      </Button>
     </div>
   );
 }

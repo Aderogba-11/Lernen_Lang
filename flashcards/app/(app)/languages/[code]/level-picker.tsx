@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { toast } from "sonner";
 import { startLanguage } from "../actions";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -13,10 +14,13 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
+export type LevelStatus = "new" | "switch" | "active";
+
 export type LevelOption = {
   code: string;
   name: string;
   available: boolean;
+  status: LevelStatus;
 };
 
 export function LevelPicker({
@@ -46,7 +50,10 @@ export function LevelPicker({
   return (
     <div className="flex w-full max-w-md flex-col gap-4">
       {levels.map((level) => (
-        <Card key={level.code} className={level.available ? "" : "opacity-60"}>
+        <Card
+          key={level.code}
+          className={level.available ? "" : "opacity-60"}
+        >
           <CardHeader>
             <CardTitle>
               {level.code}
@@ -56,17 +63,31 @@ export function LevelPicker({
             </CardTitle>
             <CardDescription>
               {level.available
-                ? `Start ${languageName} at ${level.code}`
+                ? level.status === "active"
+                  ? `You are learning ${languageName} at ${level.code}`
+                  : level.status === "switch"
+                    ? `Switch ${languageName} to ${level.code}`
+                    : `Start ${languageName} at ${level.code}`
                 : "No course published yet"}
             </CardDescription>
             <CardAction>
-              <Button
-                size="sm"
-                disabled={!level.available || isPending}
-                onClick={() => choose(level.code)}
-              >
-                {isPending ? "Starting…" : "Start"}
-              </Button>
+              {level.status === "active" && level.available ? (
+                <Badge>Active</Badge>
+              ) : (
+                <Button
+                  size="sm"
+                  disabled={!level.available || isPending}
+                  onClick={() => choose(level.code)}
+                >
+                  {!level.available
+                    ? "Unavailable"
+                    : isPending
+                      ? "Starting…"
+                      : level.status === "switch"
+                        ? `Switch to ${level.code}`
+                        : "Start"}
+                </Button>
+              )}
             </CardAction>
           </CardHeader>
         </Card>

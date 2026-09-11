@@ -409,7 +409,7 @@ export function SessionClient({
         </Button>
 
         {revealed ? (
-          <div className="grid w-full grid-cols-4 gap-2">
+          <div className="grid w-full grid-cols-2 gap-2 sm:grid-cols-4">
             {RATINGS.map((rating) => (
               <Button
                 key={rating}
