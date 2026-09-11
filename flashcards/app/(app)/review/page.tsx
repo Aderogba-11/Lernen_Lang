@@ -14,11 +14,11 @@ export default async function ReviewPage() {
   const queue = await getReviewQueue(user.id);
 
   return (
-    <main className="flex flex-1 flex-col items-center gap-6 bg-zinc-50 p-4 sm:p-6 dark:bg-black">
-      <h1 className="w-full max-w-2xl text-xl font-semibold tracking-tight">
+    <main className="flex flex-1 flex-col items-center gap-6 bg-background p-4 sm:p-6">
+      <h1 className="w-full max-w-2xl text-2xl font-bold tracking-tight">
         Review
         {queue.length > 0 && (
-          <span className="ml-2 text-sm font-normal text-zinc-500">
+          <span className="ml-2 text-base font-normal text-muted-foreground">
             {queue.length} card{queue.length === 1 ? "" : "s"} due
           </span>
         )}

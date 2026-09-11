@@ -3,9 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { toast } from "sonner";
-import {
-  setActiveEnrollment,
-} from "./actions";
+import { setActiveEnrollment } from "./actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,6 +13,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { LanguageFlag } from "@/components/language-flag";
 
 export type EnrollmentView = {
   id: string;
@@ -59,19 +58,31 @@ export function EnrollmentList({ enrollments }: { enrollments: EnrollmentView[] 
   return (
     <div className="flex flex-col gap-4">
       {enrollments.map((enrollment) => (
-        <Card key={enrollment.id}>
+        <Card
+          key={enrollment.id}
+          className={
+            enrollment.isActive
+              ? "ring-primary/25 border-primary/25"
+              : undefined
+          }
+        >
           <CardHeader>
-            <CardTitle>
-              {enrollment.languageName}
-              <span className="ml-2 text-base font-normal text-zinc-500">
-                {enrollment.nativeName}
-              </span>
-            </CardTitle>
-            <CardDescription>
-              {enrollment.courseTitle
-                ? `${enrollment.courseTitle}`
-                : "No course selected yet"}
-            </CardDescription>
+            <div className="flex items-center gap-3">
+              <LanguageFlag code={enrollment.languageCode} />
+              <div className="flex flex-1 flex-col">
+                <CardTitle>
+                  {enrollment.languageName}
+                  <span className="ml-2 text-base font-normal text-muted-foreground">
+                    {enrollment.nativeName}
+                  </span>
+                </CardTitle>
+                <CardDescription>
+                  {enrollment.courseTitle
+                    ? `${enrollment.courseTitle}`
+                    : "No course selected yet"}
+                </CardDescription>
+              </div>
+            </div>
             <CardAction>
               {enrollment.isActive ? (
                 <Badge>Active</Badge>

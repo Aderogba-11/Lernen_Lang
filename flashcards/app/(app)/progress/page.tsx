@@ -6,6 +6,7 @@ import { getGamificationSummary } from "@/lib/gamification";
 import { getCourseNavigation } from "@/lib/course";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 import { LockIcon } from "lucide-react";
 import {
   Card,
@@ -37,19 +38,30 @@ function Tile({
   label,
   value,
   sub,
+  accent = "primary",
 }: {
   label: string;
   value: string;
   sub?: string;
+  accent?: "primary" | "reward" | "success";
 }) {
+  const chip =
+    accent === "reward"
+      ? "bg-reward/15 text-reward"
+      : accent === "success"
+        ? "bg-success/15 text-success"
+        : "bg-primary/10 text-primary";
   return (
     <Card>
       <CardHeader>
+        <span className={`flex h-8 w-8 items-center justify-center rounded-lg text-xs font-bold ${chip}`}>
+          {label.charAt(0)}
+        </span>
         <CardDescription>{label}</CardDescription>
-        <CardTitle className="text-3xl">{value}</CardTitle>
+        <CardTitle className="text-3xl tracking-tight">{value}</CardTitle>
       </CardHeader>
       {sub && (
-        <CardContent className="text-sm text-zinc-500">{sub}</CardContent>
+        <CardContent className="text-muted-foreground">{sub}</CardContent>
       )}
     </Card>
   );
@@ -69,10 +81,10 @@ export default async function ProgressPage() {
 
   if (!stats.enrolled) {
     return (
-      <main className="flex flex-1 items-center justify-center bg-zinc-50 p-4 sm:p-6 dark:bg-black">
-        <Card className="w-full max-w-md">
+      <main className="flex flex-1 items-center justify-center bg-background p-4 sm:p-6">
+        <Card className="w-full max-w-md animate-card-in">
           <CardHeader>
-            <CardTitle>No active course</CardTitle>
+            <CardTitle className="text-xl">No active course</CardTitle>
             <CardDescription>
               Pick a language to start tracking progress.
             </CardDescription>
@@ -101,11 +113,11 @@ export default async function ProgressPage() {
     : undefined;
 
   return (
-    <main className="flex flex-1 flex-col items-center gap-8 bg-zinc-50 p-4 sm:p-6 dark:bg-black">
+    <main className="flex flex-1 flex-col items-center gap-8 bg-background p-4 sm:p-6">
       <div className="flex w-full max-w-4xl">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Progress</h1>
-          <p className="text-sm text-zinc-500">
+          <h1 className="text-2xl font-bold tracking-tight">Progress</h1>
+          <p className="text-sm text-muted-foreground">
             {stats.languageName} · {stats.courseTitle}
           </p>
         </div>
@@ -131,7 +143,7 @@ export default async function ProgressPage() {
             </Button>
           )}
         </div>
-        <p className="text-sm text-zinc-500">
+        <p className="text-sm text-muted-foreground">
           {stats.reviewsToday} card review{stats.reviewsToday === 1 ? "" : "s"} today
         </p>
       </div>
@@ -146,6 +158,7 @@ export default async function ProgressPage() {
           label="Cards reviewed"
           value={String(stats.cardsTouched)}
           sub="unique flashcards"
+          accent="success"
         />
         <Tile
           label="Cards in rotation"
@@ -161,14 +174,16 @@ export default async function ProgressPage() {
 
       <div className="grid w-full max-w-4xl grid-cols-2 gap-4 lg:grid-cols-4">
         <Tile
-          label="XP"
+          label="Total XP"
           value={String(gam.totalXp)}
           sub={`Learner Level ${gam.level}`}
+          accent="reward"
         />
         <Tile
           label="Current streak"
           value={`${gam.currentStreak} day${gam.currentStreak === 1 ? "" : "s"}`}
           sub="consecutive study days"
+          accent="reward"
         />
         <Tile
           label="Longest streak"
@@ -178,20 +193,16 @@ export default async function ProgressPage() {
         <Card>
           <CardHeader>
             <CardDescription>Level {gam.level} progress</CardDescription>
-            <CardTitle className="text-3xl">
+            <CardTitle className="text-3xl tracking-tight">
               {gam.xpIntoLevel} / {gam.xpIntoLevel + gam.xpToNext}
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="h-2 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
-              <div
-                className="h-full rounded-full bg-zinc-900 dark:bg-zinc-100"
-                style={{
-                  width: `${(gam.xpIntoLevel / (gam.xpIntoLevel + gam.xpToNext)) * 100}%`,
-                }}
-              />
-            </div>
-            <p className="mt-2 text-xs text-zinc-500">
+          <CardContent className="flex flex-col gap-1.5">
+            <Progress
+              value={(gam.xpIntoLevel / (gam.xpIntoLevel + gam.xpToNext)) * 100}
+              variant="reward"
+            />
+            <p className="text-xs text-muted-foreground">
               {gam.xpToNext} XP to level {gam.level + 1}
             </p>
           </CardContent>
@@ -212,13 +223,17 @@ export default async function ProgressPage() {
                 title={`${day.date}: ${day.count}`}
               >
                 <div
-                  className="w-full rounded-t bg-zinc-900 transition-colors group-hover:bg-zinc-700 dark:bg-zinc-100 dark:group-hover:bg-zinc-300"
+                  className={`w-full rounded-t transition-all ${
+                    day.count === 0
+                      ? "bg-muted"
+                      : "bg-primary hover:bg-primary/80"
+                  }`}
                   style={{ height: `${Math.max((day.count / maxActivity) * 100, day.count > 0 ? 8 : 2)}%` }}
                 />
               </div>
             ))}
           </div>
-          <div className="mt-2 flex justify-between text-xs text-zinc-400">
+          <div className="mt-2 flex justify-between text-xs text-muted-foreground">
             <span>13 days ago</span>
             <span>Today</span>
           </div>
@@ -239,7 +254,7 @@ export default async function ProgressPage() {
               return (
             <div
               key={m.id}
-              className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-800"
+              className="rounded-lg border border-border p-4"
             >
               <div className="mb-3 flex items-center justify-between">
                 <span className="font-medium">
@@ -262,15 +277,9 @@ export default async function ProgressPage() {
                   ))}
                 </div>
               )}
-              <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
-                <div
-                  className="h-full rounded-full bg-zinc-900 dark:bg-zinc-100"
-                  style={{
-                    width:
-                      m.total === 0
-                        ? "0%"
-                        : `${(m.completed / m.total) * 100}%`,
-                  }}
+              <div className="mt-3">
+                <Progress
+                  value={m.total === 0 ? 0 : (m.completed / m.total) * 100}
                 />
               </div>
               <ul className="mt-3 flex flex-col gap-1">
@@ -280,13 +289,13 @@ export default async function ProgressPage() {
                       key={l.id}
                       className="flex items-center justify-between gap-3 rounded-md px-2 py-1.5 text-sm"
                     >
-                      <span className="flex min-w-0 items-center gap-2 text-zinc-400">
+                      <span className="flex min-w-0 items-center gap-2 text-muted-foreground">
                         <LockIcon className="h-3.5 w-3.5 shrink-0" />
                         <span className="truncate">
                           Lesson {l.order}: {l.title}
                         </span>
                       </span>
-                      <span className="shrink-0 text-xs text-zinc-400">
+                      <span className="shrink-0 text-xs text-muted-foreground">
                         Complete earlier lessons first
                       </span>
                     </li>
@@ -294,7 +303,7 @@ export default async function ProgressPage() {
                     <li key={l.id}>
                       <Link
                         href={`/learn/${l.id}`}
-                        className="flex items-center justify-between gap-3 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-900"
+                        className="flex items-center justify-between gap-3 rounded-md px-2 py-1.5 text-sm transition-colors hover:bg-muted"
                       >
                         <span className="truncate font-medium">
                           Lesson {l.order}: {l.title}
@@ -323,7 +332,7 @@ export default async function ProgressPage() {
               );
             })
           ) : (
-            <p className="text-sm text-zinc-500">
+            <p className="text-sm text-muted-foreground">
               Complete a lesson to see module breakdown.
             </p>
           )}
@@ -342,17 +351,19 @@ export default async function ProgressPage() {
             {gam.achievements.map((a) => (
               <div
                 key={a.code}
-                className={`flex flex-col items-center gap-1 rounded-lg border p-4 text-center ${
+                className={`flex flex-col items-center gap-1.5 rounded-lg border p-4 text-center ${
                   a.earned
-                    ? "border-zinc-300 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900"
-                    : "border-dashed border-zinc-200 opacity-50 dark:border-zinc-800"
+                    ? "border-reward/25 bg-reward/10 shadow-sm"
+                    : "border-dashed border-border opacity-50"
                 }`}
               >
                 <span className="text-2xl">{a.icon}</span>
                 <span className="text-sm font-medium">{a.title}</span>
-                <span className="text-xs text-zinc-500">{a.description}</span>
+                <span className="text-xs text-muted-foreground">
+                  {a.description}
+                </span>
                 {a.earned ? (
-                  <Badge>Unlocked</Badge>
+                  <Badge className="bg-reward text-reward-foreground">Unlocked</Badge>
                 ) : (
                   <Badge variant="secondary">Locked</Badge>
                 )}
@@ -369,11 +380,11 @@ export default async function ProgressPage() {
         </CardHeader>
         <CardContent>
           {stats.recent.length === 0 ? (
-            <p className="text-sm text-zinc-500">
+            <p className="text-sm text-muted-foreground">
               No exercise attempts yet — complete a lesson to see results here.
             </p>
           ) : (
-            <ul className="flex flex-col divide-y divide-zinc-200 dark:divide-zinc-800">
+            <ul className="flex flex-col divide-y divide-border">
               {stats.recent.map((attempt) => (
                 <li
                   key={attempt.id}
@@ -388,11 +399,11 @@ export default async function ProgressPage() {
                     <span className="font-medium">
                       {SKILL_LABELS[attempt.skill] ?? attempt.skill}
                     </span>
-                    <span className="text-zinc-500">
+                    <span className="text-muted-foreground">
                       {attempt.lessonTitle}
                     </span>
                   </div>
-                  <div className="flex items-center gap-4 text-zinc-500">
+                  <div className="flex items-center gap-4 text-muted-foreground">
                     {attempt.correct !== null && attempt.total !== null && (
                       <span>
                         {attempt.correct}/{attempt.total}

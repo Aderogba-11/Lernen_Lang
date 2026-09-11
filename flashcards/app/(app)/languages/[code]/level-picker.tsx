@@ -13,6 +13,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { CheckCircle2Icon } from "lucide-react";
 
 export type LevelStatus = "new" | "switch" | "active";
 
@@ -52,14 +53,23 @@ export function LevelPicker({
       {levels.map((level) => (
         <Card
           key={level.code}
-          className={level.available ? "" : "opacity-60"}
+          className={`transition-all ${
+            level.status === "active"
+              ? "border-primary/30 bg-primary/5"
+              : !level.available
+                ? "opacity-60"
+                : ""
+          }`}
         >
           <CardHeader>
-            <CardTitle>
+            <CardTitle className="flex items-center gap-2">
               {level.code}
-              <span className="ml-2 text-base font-normal text-zinc-500">
+              <span className="text-base font-normal text-muted-foreground">
                 {level.name}
               </span>
+              {level.status === "active" && (
+                <CheckCircle2Icon className="h-4 w-4 text-success" />
+              )}
             </CardTitle>
             <CardDescription>
               {level.available
@@ -78,6 +88,9 @@ export function LevelPicker({
                   size="sm"
                   disabled={!level.available || isPending}
                   onClick={() => choose(level.code)}
+                  variant={
+                    level.status === "switch" ? "outline" : "default"
+                  }
                 >
                   {!level.available
                     ? "Unavailable"

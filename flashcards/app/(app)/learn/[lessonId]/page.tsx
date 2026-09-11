@@ -28,10 +28,10 @@ export default async function LessonSessionPage({
 
   if ("error" in session) {
     return (
-      <main className="flex flex-1 items-center justify-center bg-zinc-50 p-4 sm:p-6 dark:bg-black">
-        <Card className="w-full max-w-md">
+      <main className="flex flex-1 items-center justify-center bg-background p-4 sm:p-6">
+        <Card className="w-full max-w-md animate-card-in">
           <CardHeader>
-            <CardTitle>Lesson unavailable</CardTitle>
+            <CardTitle className="text-xl">Lesson unavailable</CardTitle>
             <CardDescription>{session.error}</CardDescription>
           </CardHeader>
           <CardContent>
@@ -47,13 +47,13 @@ export default async function LessonSessionPage({
   const nextLesson = await getNextLesson(user.id, lessonId);
 
   return (
-    <main className="flex flex-1 flex-col items-center gap-6 bg-zinc-50 p-4 sm:p-6 dark:bg-black">
+    <main className="flex flex-1 flex-col items-center gap-6 bg-background p-4 sm:p-6">
       <div className="flex w-full max-w-md flex-col gap-1 text-center">
-        <h1 className="text-xl font-semibold tracking-tight">
+        <h1 className="text-2xl font-bold tracking-tight">
           {session.lessonTitle}
         </h1>
         {session.objective && (
-          <p className="text-sm text-zinc-500">{session.objective}</p>
+          <p className="text-sm text-muted-foreground">{session.objective}</p>
         )}
       </div>
       <SessionClient session={session} nextLesson={nextLesson} />

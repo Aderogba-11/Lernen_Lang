@@ -35,7 +35,7 @@ type AdminFormProps = {
 };
 
 const inputClass =
-  "flex h-9 w-full rounded-md border border-zinc-200 bg-white px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-zinc-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-400 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-800 dark:bg-zinc-950 dark:placeholder:text-zinc-600";
+  "flex h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm dark:bg-input/30 dark:disabled:bg-input/80";
 
 export function AdminForm({
   fields,
@@ -128,9 +128,9 @@ export function AdminForm({
                 name={field.name}
                 type="checkbox"
                 defaultChecked={!!field.value}
-                className="h-4 w-4 rounded border-zinc-300"
+                className="h-4 w-4 rounded border-input"
               />
-              <span className="text-sm text-zinc-500">{field.placeholder}</span>
+              <span className="text-sm text-muted-foreground">{field.placeholder}</span>
             </div>
           ) : (
             <Input

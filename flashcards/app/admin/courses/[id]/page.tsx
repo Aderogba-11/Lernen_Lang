@@ -97,13 +97,13 @@ export default async function CoursePage({
   ];
 
   return (
-    <main className="flex flex-1 flex-col items-center gap-8 bg-zinc-50 p-4 sm:p-6 dark:bg-black">
+    <main className="flex flex-1 flex-col items-center gap-8 bg-background p-4 sm:p-6">
       <div className="flex w-full max-w-2xl items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">
             {isNew ? "New course" : course!.title}
           </h1>
-          <p className="text-sm text-zinc-500">
+          <p className="text-sm text-muted-foreground">
             {isNew && searchParams.languageId ? "New course" : "Course details"}
           </p>
         </div>
@@ -150,18 +150,18 @@ export default async function CoursePage({
             </CardHeader>
             <CardContent>
               {course.modules.length === 0 ? (
-                <p className="text-sm text-zinc-500">No modules yet.</p>
+                <p className="text-sm text-muted-foreground">No modules yet.</p>
               ) : (
                 <ul className="flex flex-col gap-2">
                   {course.modules.map((module_) => (
                     <li key={module_.id}>
                       <Link
                         href={`/admin/modules/${module_.id}`}
-                        className="flex items-center justify-between rounded-md border border-zinc-200 p-3 transition-colors hover:border-zinc-400 dark:border-zinc-800 dark:hover:border-zinc-600"
+                        className="flex items-center justify-between rounded-md border border-border p-3 transition-colors hover:border-primary/40"
                       >
                         <span className="flex items-center gap-2 font-medium">
-                          <FolderIcon className="h-4 w-4 text-zinc-400" />
-                          <span className="text-zinc-300 dark:text-zinc-600">
+                          <FolderIcon className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-muted-foreground/70">
                             {module_.order}.
                           </span>
                           {module_.title}

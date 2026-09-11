@@ -5,6 +5,7 @@ import { getSessionUser } from "@/lib/session";
 import { getUserEnrollments } from "@/lib/enrollments";
 import { LEVEL_ORDER } from "./levels";
 import { LevelPicker, type LevelStatus, type LevelOption } from "./level-picker";
+import { LanguageFlag } from "@/components/language-flag";
 import { Button } from "@/components/ui/button";
 
 export const metadata = { title: "Choose a level — Lernen Lang" };
@@ -51,15 +52,20 @@ export default async function LanguageLevelPage({
   });
 
   return (
-    <main className="flex flex-1 flex-col items-center gap-8 bg-zinc-50 p-4 sm:p-6 dark:bg-black">
+    <main className="flex flex-1 flex-col items-center gap-8 bg-background p-4 sm:p-6">
       <div className="flex w-full max-w-md flex-col gap-2">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          {language.name}{" "}
-          <span className="text-lg font-normal text-zinc-500">
-            {language.nativeName}
-          </span>
-        </h1>
-        <p className="text-sm text-zinc-500">
+        <div className="flex items-center gap-3">
+          <LanguageFlag code={language.code} className="h-12 w-12 text-base" />
+          <div className="flex flex-col gap-0.5">
+            <h1 className="text-2xl font-bold tracking-tight">
+              {language.name}
+            </h1>
+            <span className="text-sm text-muted-foreground">
+              {language.nativeName}
+            </span>
+          </div>
+        </div>
+        <p className="text-sm text-muted-foreground">
           Pick your starting level. You can only select levels with a published
           course.
         </p>

@@ -15,7 +15,7 @@ export async function NotificationBell({
       <Link href="/notifications" className="relative">
         <BellIcon className="h-4 w-4" />
         {unread > 0 && (
-          <span className="absolute -right-2 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] leading-none text-white">
+          <span className="absolute -right-2 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] leading-none text-destructive-foreground">
             {unread}
           </span>
         )}

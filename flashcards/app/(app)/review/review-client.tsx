@@ -5,6 +5,7 @@ import { useMemo, useState, useTransition } from "react";
 import { rateReviewCard } from "@/app/(app)/review/actions";
 import { RATINGS, type Rating } from "@/lib/ratings";
 import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 import {
   Card,
   CardContent,
@@ -19,6 +20,13 @@ const RATING_LABELS: Record<Rating, string> = {
   HARD: "Hard",
   GOOD: "Good",
   EASY: "Easy",
+};
+
+const RATING_BUTTON_STYLES: Record<Rating, string> = {
+  AGAIN: "outline-ring hover:border-destructive/60 hover:text-destructive",
+  HARD: "outline",
+  GOOD: "default",
+  EASY: "outline-success hover:border-success/60 hover:text-success",
 };
 
 export function ReviewSession({ queue }: { queue: ReviewCard[] }) {
@@ -104,26 +112,44 @@ export function ReviewSession({ queue }: { queue: ReviewCard[] }) {
   }
 
   if (finished) {
+    const accuracyLabel =
+      accuracy >= 80 ? "Excellent recall!" : accuracy >= 60 ? "Good work!" : "Keep reviewing";
     return (
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle>Review complete</CardTitle>
+      <Card className="w-full max-w-md animate-pop-in">
+        <CardHeader className="text-center">
+          <div className="mx-auto mb-1 flex h-14 w-14 items-center justify-center rounded-full bg-success/15 text-success">
+            <svg
+              className="h-7 w-7"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2.5}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M20 6 9 17l-5-5" />
+            </svg>
+          </div>
+          <CardTitle className="text-2xl">Review complete! 🎉</CardTitle>
           <CardDescription>
             You reviewed {total} card{total === 1 ? "" : "s"}.
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
-          <div className="flex items-center justify-between rounded-lg border border-zinc-200 p-3 dark:border-zinc-800">
-            <span className="text-sm text-zinc-500">Accuracy</span>
-            <span className="font-medium">{accuracy}%</span>
+          <div className="flex items-center justify-between rounded-lg bg-muted p-3">
+            <span className="text-sm text-muted-foreground">Accuracy</span>
+            <span className="flex items-center gap-2">
+              <span className="font-semibold text-success">{accuracy}%</span>
+              <span className="text-sm text-muted-foreground">{accuracyLabel}</span>
+            </span>
           </div>
           <div className="flex flex-wrap gap-2 text-sm">
             {RATINGS.map((rating) => (
               <div
                 key={rating}
-                className="flex items-center gap-1.5 text-zinc-500"
+                className="flex items-center gap-1.5 text-muted-foreground"
               >
-                <span className="font-medium text-zinc-700 dark:text-zinc-300">
+                <span className="font-medium text-foreground">
                   {RATING_LABELS[rating]}
                 </span>
                 <span>{counts[rating]}</span>
@@ -142,40 +168,35 @@ export function ReviewSession({ queue }: { queue: ReviewCard[] }) {
   }
 
   return (
-    <Card className="w-full max-w-md">
+    <Card className="w-full max-w-md animate-card-in">
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardDescription>Review</CardDescription>
-          <span className="text-sm font-medium text-zinc-500">
+          <span className="text-sm font-medium text-muted-foreground">
             {index + 1} / {total}
           </span>
         </div>
-        <div className="h-2 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
-          <div
-            className="h-full rounded-full bg-zinc-900 transition-all dark:bg-zinc-100"
-            style={{ width: `${(index / total) * 100}%` }}
-          />
-        </div>
+        <Progress value={(index / total) * 100} />
       </CardHeader>
       <CardContent className="flex flex-col items-center gap-6">
-        <div className="flex min-h-40 w-full flex-col items-center justify-center gap-3 rounded-lg border border-zinc-200 p-6 text-center dark:border-zinc-800">
+        <div className="flex min-h-44 w-full flex-col items-center justify-center gap-3 rounded-xl border border-border bg-muted/30 p-6 text-center">
           <p className="text-3xl font-semibold tracking-tight">
             {card.targetText}
           </p>
           {revealed ? (
-            <div className="flex flex-col gap-1 text-sm">
-              <p className="text-zinc-500">{card.translation}</p>
+            <div className="flex animate-flash-reveal flex-col gap-1 text-sm">
+              <p className="text-muted-foreground">{card.translation}</p>
               {card.pronunciation && (
-                <p className="text-zinc-400">[{card.pronunciation}]</p>
+                <p className="text-muted-foreground/70">[{card.pronunciation}]</p>
               )}
               {card.exampleSentence && (
-                <p className="mt-2 italic text-zinc-600 dark:text-zinc-300">
+                <p className="mt-2 italic text-foreground/80">
                   {"\u201c"}{card.exampleSentence}{"\u201d"}
                 </p>
               )}
             </div>
           ) : (
-            <p className="text-sm text-zinc-400">
+            <p className="text-sm text-muted-foreground">
               Tap reveal to see the meaning
             </p>
           )}
@@ -190,7 +211,16 @@ export function ReviewSession({ queue }: { queue: ReviewCard[] }) {
             {RATINGS.map((rating) => (
               <Button
                 key={rating}
-                variant={rating === "GOOD" ? "default" : "outline"}
+                variant={
+                  RATING_BUTTON_STYLES[rating] === "default"
+                    ? "default"
+                    : "outline"
+                }
+                className={
+                  RATING_BUTTON_STYLES[rating] === "default"
+                    ? undefined
+                    : `transition-all active:scale-[0.98] ${RATING_BUTTON_STYLES[rating]}`
+                }
                 disabled={pending}
                 onClick={() => handleRate(rating)}
               >

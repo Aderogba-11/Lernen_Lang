@@ -53,11 +53,11 @@ export default async function NotificationsPage() {
   const unreadCount = items.filter((n) => n.unread).length;
 
   return (
-    <main className="flex flex-1 flex-col items-center gap-8 bg-zinc-50 p-4 sm:p-6 dark:bg-black">
+    <main className="flex flex-1 flex-col items-center gap-8 bg-background p-4 sm:p-6">
       <div className="flex w-full max-w-2xl items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Notifications</h1>
-          <p className="text-sm text-zinc-500">
+          <h1 className="text-2xl font-bold tracking-tight">Notifications</h1>
+          <p className="text-sm text-muted-foreground">
             {unreadCount > 0
               ? `${unreadCount} unread`
               : "All caught up"}
@@ -68,10 +68,12 @@ export default async function NotificationsPage() {
 
       <section className="flex w-full max-w-2xl flex-col gap-4">
         {items.length === 0 ? (
-          <Card>
+          <Card className="animate-card-in">
             <CardHeader>
               <div className="flex items-center gap-3">
-                <InboxIcon className="h-5 w-5 text-zinc-400" />
+                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                  <InboxIcon className="h-5 w-5" />
+                </span>
                 <div>
                   <CardTitle>Nothing here yet</CardTitle>
                   <CardDescription>
@@ -93,26 +95,28 @@ export default async function NotificationsPage() {
                 <span className="flex items-center gap-2 font-medium">
                   {item.title}
                   {item.unread && (
-                    <span className="h-2 w-2 shrink-0 rounded-full bg-blue-500" />
+                    <span className="h-2 w-2 shrink-0 rounded-full bg-primary" />
                   )}
                 </span>
                 {item.body && (
-                  <span className="text-sm text-zinc-500">{item.body}</span>
+                  <span className="text-sm text-muted-foreground">
+                    {item.body}
+                  </span>
                 )}
-                <span className="mt-1 text-xs text-zinc-400">
+                <span className="mt-1 text-xs text-muted-foreground">
                   {ui.label} · {formatWhen(item.createdAt)}
                 </span>
               </>
             );
 
             return (
-              <Card key={item.id}>
+              <Card key={item.id} className="animate-slide-in">
                 <CardContent className="flex items-start gap-3 pt-6">
                   <span
-                    className={`mt-0.5 shrink-0 rounded-md p-2 ${
+                    className={`mt-0.5 shrink-0 rounded-lg p-2 ${
                       item.unread
-                        ? "bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300"
-                        : "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400"
+                        ? "bg-primary/10 text-primary"
+                        : "bg-muted text-muted-foreground"
                     }`}
                   >
                     <Icon className="h-4 w-4" />
@@ -129,7 +133,7 @@ export default async function NotificationsPage() {
                   {item.unread ? (
                     <MarkReadButton notificationId={item.id} />
                   ) : (
-                    <BadgeCheckIcon className="mt-1 h-4 w-4 shrink-0 text-zinc-300 dark:text-zinc-700" />
+                    <BadgeCheckIcon className="mt-1 h-4 w-4 shrink-0 text-border" />
                   )}
                 </CardContent>
               </Card>

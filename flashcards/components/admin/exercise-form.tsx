@@ -29,7 +29,7 @@ type Props = {
 };
 
 const inputClass =
-  "flex h-9 w-full rounded-md border border-zinc-200 bg-white px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-zinc-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-400 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-800 dark:bg-zinc-950 dark:placeholder:text-zinc-600";
+  "flex h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm dark:bg-input/30 dark:disabled:bg-input/80";
 
 const WRITING_KINDS = ["translation", "fill-blank", "word-order"] as const;
 
@@ -390,7 +390,7 @@ function QuestionsEditor({
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-md border border-zinc-200 p-3 dark:border-zinc-800">
+    <div className="flex flex-col gap-3 rounded-md border border-border p-3">
       <div className="flex items-center justify-between">
         <Label>Questions</Label>
         <Button type="button" size="sm" variant="outline" onClick={addRow}>
@@ -398,7 +398,7 @@ function QuestionsEditor({
         </Button>
       </div>
       {questions.length === 0 && (
-        <p className="text-sm text-zinc-500">No questions yet.</p>
+        <p className="text-sm text-muted-foreground">No questions yet.</p>
       )}
       {questions.map((q, i) => {
         const options = q.options
@@ -408,15 +408,15 @@ function QuestionsEditor({
         return (
           <div
             key={i}
-            className="flex flex-col gap-2 rounded-md border border-zinc-200 p-3 dark:border-zinc-800"
+            className="flex flex-col gap-2 rounded-md border border-border p-3"
           >
             <div className="flex items-center gap-2">
-              <span className="text-xs font-medium text-zinc-400">Q{i + 1}</span>
+              <span className="text-xs font-medium text-muted-foreground">Q{i + 1}</span>
               <Button
                 type="button"
                 size="sm"
                 variant="ghost"
-                className="ml-auto text-zinc-400"
+                className="ml-auto text-muted-foreground"
                 onClick={() => removeRow(i)}
               >
                 Remove
@@ -436,7 +436,7 @@ function QuestionsEditor({
               className={cn(inputClass, "h-auto py-2")}
             />
             <div className="flex items-center gap-2">
-              <span className="text-sm text-zinc-500">Correct answer:</span>
+              <span className="text-sm text-muted-foreground">Correct answer:</span>
               <select
                 value={q.answerIndex}
                 onChange={(e) => updateRow(i, { answerIndex: Number(e.target.value) })}
@@ -469,7 +469,7 @@ function Field({
     <div className="flex flex-col gap-1.5">
       <Label>
         {label}
-        {required && <span className="text-zinc-400"> *</span>}
+        {required && <span className="text-muted-foreground"> *</span>}
       </Label>
       {children}
     </div>

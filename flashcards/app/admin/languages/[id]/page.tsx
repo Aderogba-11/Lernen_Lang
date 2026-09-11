@@ -70,7 +70,7 @@ export default async function LanguagePage({
   ];
 
   return (
-    <main className="flex flex-1 items-center justify-center bg-zinc-50 p-4 sm:p-6 dark:bg-black">
+    <main className="flex flex-1 items-center justify-center bg-background p-4 sm:p-6">
       <Card className="w-full max-w-lg">
         <CardHeader>
           <CardTitle>{isNew ? "New language" : "Language"}</CardTitle>

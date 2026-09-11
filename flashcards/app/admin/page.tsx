@@ -33,11 +33,11 @@ export default async function AdminPage() {
   const tree = await getAdminCatalogTree();
 
   return (
-    <main className="flex flex-1 flex-col items-center gap-8 bg-zinc-50 p-4 sm:p-6 dark:bg-black">
+    <main className="flex flex-1 flex-col items-center gap-8 bg-background p-4 sm:p-6">
       <div className="flex w-full max-w-4xl items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Content management</h1>
-          <p className="text-sm text-zinc-500">
+          <p className="text-sm text-muted-foreground">
             Maintain the learning catalogue.
           </p>
         </div>
@@ -54,7 +54,7 @@ export default async function AdminPage() {
             <CardHeader>
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <LanguagesIcon className="h-5 w-5 text-zinc-400" />
+                  <LanguagesIcon className="h-5 w-5 text-muted-foreground" />
                   <CardTitle>{language.name}</CardTitle>
                   <Badge variant="outline">{language.code}</Badge>
                   {!language.isActive && (
@@ -80,10 +80,10 @@ export default async function AdminPage() {
                     <li key={course.id}>
                       <Link
                         href={`/admin/courses/${course.id}`}
-                        className="flex items-center justify-between rounded-md border border-zinc-200 p-3 transition-colors hover:border-zinc-400 dark:border-zinc-800 dark:hover:border-zinc-600"
+                        className="flex items-center justify-between rounded-md border border-border p-3 transition-colors hover:border-primary/40"
                       >
                         <span className="flex items-center gap-2 font-medium">
-                          <BookIcon className="h-4 w-4 text-zinc-400" />
+                          <BookIcon className="h-4 w-4 text-muted-foreground" />
                           {course.title}
                           <Badge variant="outline">{course.level.code}</Badge>
                         </span>
@@ -91,7 +91,7 @@ export default async function AdminPage() {
                           <Badge variant={STATUS_STYLE[course.status] ?? "secondary"}>
                             {course.status}
                           </Badge>
-                          <span className="text-xs text-zinc-400">
+                          <span className="text-xs text-muted-foreground">
                             {course.modules.length} module
                             {course.modules.length === 1 ? "" : "s"}
                           </span>
@@ -103,16 +103,16 @@ export default async function AdminPage() {
                             <li key={module_.id}>
                               <Link
                                 href={`/admin/modules/${module_.id}`}
-                                className="flex items-center justify-between rounded-md border border-zinc-100 px-3 py-2 text-sm transition-colors hover:border-zinc-300 dark:border-zinc-900 dark:hover:border-zinc-700"
+                                className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm transition-colors hover:border-primary/30"
                               >
                                 <span className="flex items-center gap-2">
-                                  <FolderIcon className="h-4 w-4 text-zinc-400" />
-                                  <span className="text-zinc-300 dark:text-zinc-600">
+                                  <FolderIcon className="h-4 w-4 text-muted-foreground" />
+                                  <span className="text-muted-foreground/70">
                                     {module_.order}.
                                   </span>
                                   {module_.title}
                                 </span>
-                                <span className="text-xs text-zinc-400">
+                                <span className="text-xs text-muted-foreground">
                                   {module_.lessons.length} lesson
                                   {module_.lessons.length === 1 ? "" : "s"}
                                 </span>

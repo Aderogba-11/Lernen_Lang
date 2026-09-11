@@ -100,13 +100,13 @@ export default async function LessonPage({
   ];
 
   return (
-    <main className="flex flex-1 flex-col items-center gap-8 bg-zinc-50 p-4 sm:p-6 dark:bg-black">
+    <main className="flex flex-1 flex-col items-center gap-8 bg-background p-4 sm:p-6">
       <div className="flex w-full max-w-2xl items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">
             {isNew ? "New lesson" : lesson!.title}
           </h1>
-          <p className="text-sm text-zinc-500">
+          <p className="text-sm text-muted-foreground">
             {module_
               ? `${module_.course.title} · ${module_.course.level.code} · ${module_.title}`
               : "Lesson"}
@@ -161,21 +161,21 @@ export default async function LessonPage({
               </CardHeader>
               <CardContent>
                 {lesson.flashcards.length === 0 ? (
-                  <p className="text-sm text-zinc-500">No flashcards yet.</p>
+                  <p className="text-sm text-muted-foreground">No flashcards yet.</p>
                 ) : (
                   <ul className="flex flex-col gap-2">
                     {lesson.flashcards.map((card) => (
                       <li key={card.id}>
                         <Link
                           href={`/admin/flashcards/${card.id}`}
-                          className="flex items-center justify-between rounded-md border border-zinc-200 p-3 transition-colors hover:border-zinc-400 dark:border-zinc-800 dark:hover:border-zinc-600"
+                          className="flex items-center justify-between rounded-md border border-border p-3 transition-colors hover:border-primary/40"
                         >
                           <span className="flex items-center gap-2 font-medium">
-                            <span className="text-zinc-300 dark:text-zinc-600">
+                            <span className="text-muted-foreground/70">
                               {card.order}.
                             </span>
                             {card.targetText}
-                            <span className="text-sm font-normal text-zinc-400">
+                            <span className="text-sm font-normal text-muted-foreground">
                               · {card.translation}
                             </span>
                           </span>
@@ -205,18 +205,18 @@ export default async function LessonPage({
               </CardHeader>
               <CardContent>
                 {lesson.exercises.length === 0 ? (
-                  <p className="text-sm text-zinc-500">No exercises yet.</p>
+                  <p className="text-sm text-muted-foreground">No exercises yet.</p>
                 ) : (
                   <ul className="flex flex-col gap-2">
                     {lesson.exercises.map((exercise) => (
                       <li key={exercise.id}>
                         <Link
                           href={`/admin/exercises/${exercise.id}`}
-                          className="flex items-center justify-between rounded-md border border-zinc-200 p-3 transition-colors hover:border-zinc-400 dark:border-zinc-800 dark:hover:border-zinc-600"
+                          className="flex items-center justify-between rounded-md border border-border p-3 transition-colors hover:border-primary/40"
                         >
                           <span className="flex items-center gap-2 font-medium">
-                            <FolderIcon className="h-4 w-4 text-zinc-400" />
-                            <span className="text-zinc-300 dark:text-zinc-600">
+                            <FolderIcon className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-muted-foreground/70">
                               {exercise.order}.
                             </span>
                             {exercise.prompt}

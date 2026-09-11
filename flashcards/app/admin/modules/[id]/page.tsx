@@ -80,13 +80,13 @@ export default async function ModulePage({
   ];
 
   return (
-    <main className="flex flex-1 flex-col items-center gap-8 bg-zinc-50 p-4 sm:p-6 dark:bg-black">
+    <main className="flex flex-1 flex-col items-center gap-8 bg-background p-4 sm:p-6">
       <div className="flex w-full max-w-2xl items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">
             {isNew ? "New module" : module_!.title}
           </h1>
-          <p className="text-sm text-zinc-500">
+          <p className="text-sm text-muted-foreground">
             {course ? `${course.title} · ${course.level.code}` : "Module"}
           </p>
         </div>
@@ -139,23 +139,23 @@ export default async function ModulePage({
             </CardHeader>
             <CardContent>
               {module_.lessons.length === 0 ? (
-                <p className="text-sm text-zinc-500">No lessons yet.</p>
+                <p className="text-sm text-muted-foreground">No lessons yet.</p>
               ) : (
                 <ul className="flex flex-col gap-2">
                   {module_.lessons.map((lesson) => (
                     <li key={lesson.id}>
                       <Link
                         href={`/admin/lessons/${lesson.id}`}
-                        className="flex items-center justify-between rounded-md border border-zinc-200 p-3 transition-colors hover:border-zinc-400 dark:border-zinc-800 dark:hover:border-zinc-600"
+                        className="flex items-center justify-between rounded-md border border-border p-3 transition-colors hover:border-primary/40"
                       >
                         <span className="flex items-center gap-2 font-medium">
-                          <FolderIcon className="h-4 w-4 text-zinc-400" />
-                          <span className="text-zinc-300 dark:text-zinc-600">
+                          <FolderIcon className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-muted-foreground/70">
                             {lesson.order}.
                           </span>
                           {lesson.title}
                         </span>
-                        <span className="flex items-center gap-2 text-xs text-zinc-400">
+                        <span className="flex items-center gap-2 text-xs text-muted-foreground">
                           <Badge variant="secondary">{lesson.status}</Badge>
                           {lesson._count.flashcards + lesson._count.exercises} items
                         </span>

@@ -4,6 +4,8 @@ import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { ZapIcon } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -11,24 +13,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  completeLessonAction,
-  rateFlashcardAction,
-  scoreListeningAction,
-  scoreReadingAction,
-  scoreSpeakingAction,
-  scoreWritingAction,
-} from "./actions";
+import { completeLessonAction, rateFlashcardAction, scoreListeningAction, scoreReadingAction, scoreSpeakingAction, scoreWritingAction } from "./actions";
 import { RATINGS, type Rating } from "@/lib/ratings";
-import type {
-  LessonSession,
-  SessionListening,
-  SessionReading,
-  SessionSpeaking,
-  SessionWriting,
-} from "@/lib/sessions";
+import type { LessonSession, SessionListening, SessionReading, SessionSpeaking, SessionWriting } from "@/lib/sessions";
 import { isSpeechRecognitionSupported, listenForSpeech } from "@/lib/speech";
 import type { ReadingScore } from "@/lib/scoring";
+import { XP_LESSON } from "@/lib/xp-constants";
 
 const RATING_LABELS: Record<Rating, string> = {
   AGAIN: "Again",
@@ -57,7 +47,7 @@ function McqQuestions({
           <span className="font-medium">
             {qIndex + 1}. {question.prompt}
             {result && (
-              <span className={result.results[qIndex] ? " text-green-600" : " text-red-600"}>
+              <span className={result.results[qIndex] ? " text-success" : " text-destructive"}>
                 {result.results[qIndex] ? " ✓" : " ✗"}
               </span>
             )}
@@ -69,16 +59,16 @@ function McqQuestions({
               return (
                 <label
                   key={oIndex}
-                  className={`flex cursor-pointer items-center gap-2 rounded-md border p-2 text-sm transition-colors ${
+                  className={`flex cursor-pointer items-center gap-2 rounded-lg border p-2 text-sm transition-all ${
                     isSelected
-                      ? "border-zinc-900 dark:border-zinc-100"
-                      : "border-zinc-200 dark:border-zinc-800"
-                  } ${isCorrect ? "border-green-600 text-green-700 dark:text-green-400" : ""}`}
+                      ? "border-primary ring-2 ring-primary/25"
+                      : "border-border"
+                  } ${isCorrect ? "border-success text-success dark:text-success" : ""}`}
                 >
                   <input
                     type="radio"
                     name={`q-${qIndex}`}
-                    className="accent-zinc-900"
+                    className="accent-primary"
                     checked={isSelected}
                     disabled={!!result}
                     onChange={() => onSelect(qIndex, oIndex)}
@@ -254,26 +244,48 @@ export function SessionClient({
   }
 
   if (finished) {
+    const accuracyLabel =
+      accuracy >= 80 ? "Outstanding!" : accuracy >= 60 ? "Well done!" : "Keep practicing";
     return (
-      <Card className="w-full max-w-md">
+      <Card className="w-full max-w-md animate-pop-in">
         <CardHeader className="text-center">
-          <CardTitle>Lesson complete!</CardTitle>
+          <div className="mx-auto mb-1 flex h-14 w-14 items-center justify-center rounded-full bg-success/15 text-success">
+            <svg
+              className="h-7 w-7"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2.5}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M20 6 9 17l-5-5" />
+            </svg>
+          </div>
+          <CardTitle className="text-2xl">Lesson complete! 🎉</CardTitle>
           <CardDescription>
             {session.lessonTitle} · {total} card{total === 1 ? "" : "s"} reviewed
           </CardDescription>
+          <div className="mx-auto mt-2 flex animate-xp-pop items-center gap-1.5 rounded-full bg-reward/15 px-4 py-1.5 text-sm font-semibold text-reward ring-1 ring-reward/25">
+            <ZapIcon className="h-4 w-4" />
+            +{XP_LESSON} XP earned
+          </div>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
-          <ul className="flex flex-col gap-1 text-sm">
+          <ul className="flex flex-col gap-1.5 text-sm">
             {RATINGS.map((rating) => (
               <li key={rating} className="flex justify-between">
-                <span className="text-zinc-500">{RATING_LABELS[rating]}</span>
+                <span className="text-muted-foreground">{RATING_LABELS[rating]}</span>
                 <span className="font-medium">{counts[rating]}</span>
               </li>
             ))}
           </ul>
-          <div className="flex items-center justify-between rounded-md border border-zinc-200 p-3 text-sm dark:border-zinc-800">
-            <span className="text-zinc-500">Accuracy (Good + Easy)</span>
-            <Badge>{accuracy}%</Badge>
+          <div className="flex items-center justify-between rounded-lg bg-muted p-3 text-sm">
+            <span className="text-muted-foreground">Accuracy (Good + Easy)</span>
+            <span className="flex items-center gap-2">
+              <Badge>{accuracy}%</Badge>
+              <span className="font-medium text-success">{accuracyLabel}</span>
+            </span>
           </div>
           <div className="flex flex-col gap-2">
             {nextLesson && (
@@ -355,48 +367,41 @@ export function SessionClient({
   }
 
   return (
-    <Card className="w-full max-w-md">
+    <Card className="w-full max-w-md animate-card-in">
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardDescription>
             Module {session.moduleOrder} · Lesson {session.lessonOrder}
           </CardDescription>
-          <span className="text-sm font-medium text-zinc-500">
-            {index + 1} / {total}
+          <span className="text-sm font-medium text-muted-foreground">
+            Card {index + 1} / {total}
           </span>
         </div>
-        <div className="h-2 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
-          <div
-            className="h-full rounded-full bg-zinc-900 transition-all dark:bg-zinc-100"
-            style={{ width: `${(index / total) * 100}%` }}
-          />
-        </div>
+        <Progress value={(index / total) * 100} />
       </CardHeader>
       <CardContent className="flex flex-col items-center gap-6">
-        <div className="flex min-h-40 w-full flex-col items-center justify-center gap-3 rounded-lg border border-zinc-200 p-6 text-center dark:border-zinc-800">
+        <div className="flex min-h-48 w-full flex-col items-center justify-center gap-4 rounded-xl border border-border bg-muted/30 p-6 text-center transition-shadow">
           <p className="text-3xl font-semibold tracking-tight">{card.targetText}</p>
           {revealed ? (
-            <div className="flex flex-col gap-1 text-sm">
-              <p className="text-zinc-500">{card.translation}</p>
+            <div className="flex animate-flash-reveal flex-col gap-1 text-sm">
+              <p className="text-muted-foreground">{card.translation}</p>
               {card.pronunciation && (
-                <p className="text-zinc-400">[{card.pronunciation}]</p>
+                <p className="text-muted-foreground/70">[{card.pronunciation}]</p>
               )}
               {card.partOfSpeech && (
-                <p className="text-xs uppercase tracking-wide text-zinc-400">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground/70">
                   {card.partOfSpeech}
                 </p>
               )}
               {card.exampleSentence && (
-                <p className="mt-2 italic text-zinc-600 dark:text-zinc-300">
-                  “{card.exampleSentence}”
-                </p>
+                <p className="mt-2 italic text-foreground/80">“{card.exampleSentence}”</p>
               )}
               {card.exampleTranslation && (
-                <p className="text-xs text-zinc-400">{card.exampleTranslation}</p>
+                <p className="text-xs text-muted-foreground">{card.exampleTranslation}</p>
               )}
             </div>
           ) : (
-            <p className="text-sm text-zinc-400">Tap reveal to see the meaning</p>
+            <p className="text-sm text-muted-foreground">Tap reveal to see the meaning</p>
           )}
         </div>
 
@@ -465,7 +470,7 @@ function WritingStep({
   }
 
   return (
-    <Card className="w-full max-w-2xl">
+    <Card className="w-full max-w-2xl animate-card-in">
       <CardHeader>
         <CardDescription>
           Writing {stepNumber} / {stepTotal}
@@ -473,12 +478,12 @@ function WritingStep({
         <CardTitle>{writing.prompt}</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-5">
-        <p className="rounded-lg border border-zinc-200 p-4 text-base dark:border-zinc-800">
+        <p className="rounded-lg border border-border bg-muted/30 p-4 text-base">
           {writing.display}
         </p>
 
         <textarea
-          className="min-h-20 w-full rounded-md border border-zinc-300 bg-transparent p-3 text-base outline-none focus:border-zinc-900 dark:border-zinc-700 dark:focus:border-zinc-100"
+          className="min-h-20 w-full rounded-md border border-input bg-transparent p-3 text-base outline-none transition-colors focus:border-ring focus:ring-3 focus:ring-ring/25"
           placeholder="Type your answer…"
           value={value}
           disabled={!!result || submitting}
@@ -491,16 +496,23 @@ function WritingStep({
           }}
         />
 
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        {error && <p className="text-sm text-destructive">{error}</p>}
 
         {result ? (
           <div className="flex flex-col gap-3">
-            <p className={`text-sm font-medium ${result.correct ? "text-green-600" : "text-red-600"}`}>
+            <p
+              className={`flex items-center gap-2 text-sm font-semibold ${
+                result.correct
+                  ? "text-success"
+                  : "text-destructive"
+              }`}
+            >
               {result.correct ? "Correct!" : "Not quite."}
             </p>
             {!result.correct && (
-              <p className="rounded-md border border-zinc-200 p-3 text-sm dark:border-zinc-800">
-                Expected answer: <span className="font-medium">{result.expected}</span>
+              <p className="rounded-md border border-border bg-muted/30 p-3 text-sm">
+                Expected answer:{" "}
+                <span className="font-medium">{result.expected}</span>
               </p>
             )}
             <Button onClick={onDone} disabled={pending}>
@@ -573,13 +585,13 @@ function SpeakingStep({
   }
 
   return (
-    <Card className="w-full max-w-2xl">
+    <Card className="w-full max-w-2xl animate-card-in">
       <CardHeader>
         <CardTitle>Speaking</CardTitle>
         <CardDescription>{speaking.prompt}</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-5">
-        <div className="flex flex-col items-center gap-3 rounded-lg border border-zinc-200 p-4 text-center dark:border-zinc-800">
+        <div className="flex flex-col items-center gap-3 rounded-lg border border-border bg-muted/30 p-4 text-center">
           <p className="text-xl font-medium">{speaking.targetText}</p>
           <Button
             variant="ghost"
@@ -591,16 +603,16 @@ function SpeakingStep({
         </div>
 
         {transcript !== null && (
-          <p className="text-sm text-zinc-500">
+          <p className="text-sm text-muted-foreground">
             We heard: <span className="italic">“{transcript}”</span>
           </p>
         )}
 
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        {error && <p className="text-sm text-destructive">{error}</p>}
 
         {result ? (
           <div className="flex flex-col gap-3">
-            <p className={`text-sm font-medium ${result.correct ? "text-green-600" : "text-red-600"}`}>
+            <p className={`text-sm font-semibold ${result.correct ? "text-success" : "text-destructive"}`}>
               {result.correct ? "¡Perfecto! That matches." : "Close — compare with the target sentence above."}
             </p>
             <Button onClick={onDone} disabled={pending}>
@@ -618,13 +630,13 @@ function SpeakingStep({
             </Button>
 
             {isSpeechRecognitionSupported() && (
-              <p className="text-center text-xs text-zinc-400">
+              <p className="text-center text-xs text-muted-foreground">
                 Or type it instead:
               </p>
             )}
             <div className="flex gap-2">
               <input
-                className="w-full rounded-md border border-zinc-300 bg-transparent p-2 text-sm outline-none focus:border-zinc-900 dark:border-zinc-700 dark:focus:border-zinc-100"
+                className="w-full rounded-md border border-input bg-transparent p-2 text-sm outline-none transition-colors focus:border-ring focus:ring-3 focus:ring-ring/25"
                 placeholder="Type the sentence…"
                 value={typed}
                 disabled={listening || submitting}
@@ -675,13 +687,13 @@ function ReadingStep({
   }
 
   return (
-    <Card className="w-full max-w-2xl">
+    <Card className="w-full max-w-2xl animate-card-in">
       <CardHeader>
         <CardTitle>Reading</CardTitle>
         <CardDescription>{reading.prompt}</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-6">
-        <p className="rounded-lg border border-zinc-200 p-4 text-base leading-relaxed dark:border-zinc-800">
+        <p className="rounded-lg border border-border bg-muted/30 p-4 text-base leading-relaxed">
           {reading.passage}
         </p>
 
@@ -692,12 +704,22 @@ function ReadingStep({
           onSelect={mcq.select}
         />
 
-        {mcq.error && <p className="text-sm text-red-600">{mcq.error}</p>}
+        {mcq.error && <p className="text-sm text-destructive">{mcq.error}</p>}
 
         {mcq.result ? (
           <div className="flex flex-col gap-3">
             <p className="text-sm font-medium">
-              You got {mcq.result.correct} of {mcq.result.total} correct.
+              You got{" "}
+              <span
+                className={
+                  mcq.result.correct === mcq.result.total
+                    ? "font-semibold text-success"
+                    : "font-semibold text-primary"
+                }
+              >
+                {mcq.result.correct} of {mcq.result.total}
+              </span>{" "}
+              correct.
             </p>
             <Button onClick={onDone} disabled={pending}>
               Continue
@@ -741,15 +763,15 @@ function ListeningStep({
   }
 
   return (
-    <Card className="w-full max-w-2xl">
+    <Card className="w-full max-w-2xl animate-card-in">
       <CardHeader>
         <CardTitle>Listening</CardTitle>
         <CardDescription>{listening.prompt}</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-6">
-        <div className="flex flex-col items-center gap-2 rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
+        <div className="flex flex-col items-center gap-2 rounded-lg border border-border bg-muted/30 p-4">
           {audioError ? (
-            <p className="text-sm text-zinc-500">
+            <p className="text-sm text-muted-foreground">
               Audio unavailable — please continue to the questions below.
             </p>
           ) : (
@@ -761,7 +783,7 @@ function ListeningStep({
               onError={() => setAudioError(true)}
             />
           )}
-          <p className="text-xs text-zinc-400">
+          <p className="text-xs text-muted-foreground">
             Listen as many times as you need, then answer below.
           </p>
         </div>
@@ -773,12 +795,22 @@ function ListeningStep({
           onSelect={mcq.select}
         />
 
-        {mcq.error && <p className="text-sm text-red-600">{mcq.error}</p>}
+        {mcq.error && <p className="text-sm text-destructive">{mcq.error}</p>}
 
         {mcq.result ? (
           <div className="flex flex-col gap-3">
             <p className="text-sm font-medium">
-              You got {mcq.result.correct} of {mcq.result.total} correct.
+              You got{" "}
+              <span
+                className={
+                  mcq.result.correct === mcq.result.total
+                    ? "font-semibold text-success"
+                    : "font-semibold text-primary"
+                }
+              >
+                {mcq.result.correct} of {mcq.result.total}
+              </span>{" "}
+              correct.
             </p>
             <Button onClick={onDone} disabled={pending}>
               Finish lesson
