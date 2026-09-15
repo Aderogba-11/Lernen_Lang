@@ -62,7 +62,7 @@ async function main() {
 
   // ── DB integration ────────────────────────────────────────────────────
   await db.user.deleteMany({ where: { email: { in: [EMAIL, EMAIL_B] } } });
-  const user = await db.user.create({
+  await db.user.create({
     data: { id: "phase14-user", email: EMAIL, name: "Phase14", createdAt: NOW, updatedAt: NOW },
   });
 
