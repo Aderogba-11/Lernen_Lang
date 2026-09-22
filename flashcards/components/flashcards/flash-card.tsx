@@ -43,7 +43,9 @@ function FrontFace({
 }) {
   return (
     <div className="flex h-full w-full flex-col items-center justify-center gap-4 p-6 text-center">
-      <p className="text-3xl font-semibold tracking-tight">{targetText}</p>
+      <p className="break-words text-6xl font-semibold leading-tight tracking-tight">
+        {targetText}
+      </p>
 
       <AudioButton status={audioStatus} onPlay={onPlayAudio} />
 
