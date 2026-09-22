@@ -1,6 +1,5 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AudioButton } from "@/components/review/audio-button";
 import { FlipCard } from "@/components/review/flip-card";
@@ -34,22 +33,16 @@ const RATING_BUTTON_STYLES: Record<Rating, string> = {
 };
 
 function FrontFace({
-  languageLabel,
   targetText,
   audioStatus,
   onPlayAudio,
 }: {
-  languageLabel: string;
   targetText: string;
   audioStatus: AudioStatus;
   onPlayAudio: () => void;
 }) {
   return (
     <div className="flex h-full w-full flex-col items-center justify-center gap-4 p-6 text-center">
-      <Badge variant="outline" className="px-2.5 py-1 text-xs">
-        {languageLabel}
-      </Badge>
-
       <p className="text-3xl font-semibold tracking-tight">{targetText}</p>
 
       <AudioButton status={audioStatus} onPlay={onPlayAudio} />
@@ -132,7 +125,6 @@ export function FlashCard({
   card,
   index,
   total,
-  languageLabel,
   languageCode,
   flipped,
   onFlip,
@@ -143,7 +135,6 @@ export function FlashCard({
   card: FlashCardData;
   index: number;
   total: number;
-  languageLabel: string;
   languageCode: string;
   flipped: boolean;
   onFlip: () => void;
@@ -166,7 +157,6 @@ export function FlashCard({
       backClassName={faceClassName}
       front={
         <FrontFace
-          languageLabel={languageLabel}
           targetText={card.targetText}
           audioStatus={audio.status}
           onPlayAudio={audio.play}

@@ -429,11 +429,6 @@ export function SessionClient({
         card={card}
         index={index}
         total={total}
-        languageLabel={
-          session.levelCode
-            ? `${session.languageName} · ${session.levelCode}`
-            : session.languageName
-        }
         languageCode={session.languageCode}
         flipped={revealed}
         onFlip={toggleFlip}

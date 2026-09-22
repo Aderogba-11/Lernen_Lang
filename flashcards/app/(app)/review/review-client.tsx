@@ -118,11 +118,6 @@ export function ReviewSession({ queue }: { queue: ReviewCard[] }) {
         card={card}
         index={index}
         total={total}
-        languageLabel={
-          card.levelCode
-            ? `${card.languageName} · ${card.levelCode}`
-            : card.languageName
-        }
         languageCode={card.languageCode}
         flipped={revealed}
         onFlip={toggleFlip}

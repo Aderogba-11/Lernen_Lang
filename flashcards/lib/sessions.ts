@@ -150,8 +150,6 @@ export type LessonSession = {
   lessonOrder: number;
   courseTitle: string;
   languageCode: string;
-  languageName: string;
-  levelCode: string | null;
   cards: SessionCard[];
   writings: SessionWriting[];
   reading: SessionReading | null;
@@ -179,9 +177,6 @@ type AccessibleLesson = {
         code: string;
         name: string;
       };
-      level: {
-        code: string;
-      } | null;
     };
   };
 };
@@ -196,7 +191,7 @@ async function loadAccessibleLesson(
       module: {
         include: {
           course: {
-            include: { language: true, level: true },
+            include: { language: true },
           },
         },
       },
@@ -388,8 +383,6 @@ export async function getSessionContent(
     lessonOrder: lesson.order,
     courseTitle: lesson.module.course.title,
     languageCode: lesson.module.course.language.code,
-    languageName: lesson.module.course.language.name,
-    levelCode: lesson.module.course.level?.code ?? null,
     cards,
     writings: writingsClient,
     reading,
