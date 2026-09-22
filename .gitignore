@@ -8,3 +8,6 @@ build
 tsconfig.tsbuildinfo
 *.log
 .git
+
+.vercel
+.env*
