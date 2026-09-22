@@ -6,6 +6,8 @@ import { getDashboardData } from "@/lib/dashboard";
 import { syncActionNotifications } from "@/lib/notifications";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { StatsGrid } from "@/components/dashboard/stats-grid";
+import { LessonCardGrid } from "@/components/dashboard/lesson-card";
 import {
   BadgeCheckIcon,
   BookOpenIcon,
@@ -408,6 +410,76 @@ export default async function DashboardPage() {
             accent={dailyGoal.complete ? "success" : "primary"}
           />
         </section>
+
+        <section className="flex w-full flex-col gap-3">
+          <div>
+            <h2 className="text-lg font-semibold tracking-tight">
+              Today at a glance
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              A quick pulse on your daily momentum and vocabulary.
+            </p>
+          </div>
+          <StatsGrid
+            items={[
+              {
+                id: "daily-goal",
+                label: "Daily goal",
+                value: `${data.dailyGoal.today}/${data.dailyGoal.target}`,
+                sub: "XP earned today",
+                icon: TargetIcon,
+                pct: goalPct,
+                accent: "success",
+              },
+              {
+                id: "total-xp",
+                label: "Total XP",
+                value: String(gam.totalXp),
+                sub: `Learner level ${gam.level}`,
+                icon: ZapIcon,
+                pct: levelPct,
+                accent: "reward",
+              },
+              {
+                id: "due-now",
+                label: "Due now",
+                value: String(data.dueNow),
+                sub:
+                  data.dueNow === 0
+                    ? "all caught up"
+                    : "cards ready to review",
+                icon: BookOpenIcon,
+                accent: "primary",
+              },
+            ]}
+          />
+        </section>
+
+        {data.fourSkills.some((s) => s.total > 0) && (
+          <section className="flex w-full flex-col gap-3">
+            <div>
+              <h2 className="text-lg font-semibold tracking-tight">
+                Your lessons
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                Progress per skill — keep the streak alive.
+              </p>
+            </div>
+            <LessonCardGrid
+              items={data.fourSkills
+                .filter((s) => s.total > 0)
+                .map((s) => ({
+                  id: `lesson-${s.skill}`,
+                  title: SKILL_LABELS[s.skill] ?? s.skill,
+                  level: data.levelCode,
+                  meta: "Exercise mastery",
+                  pct: Math.round((s.passed / s.total) * 100),
+                  href: "/learn",
+                  completed: s.passed > 0 && s.passed >= s.total,
+                }))}
+            />
+          </section>
+        )}
 
         <section className="grid w-full grid-cols-1 gap-4 lg:grid-cols-2">
           <Card className="animate-card-in">
