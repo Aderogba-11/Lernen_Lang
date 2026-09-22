@@ -1,8 +1,9 @@
 "use client";
 
+import { Fragment, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
-function Key({ children }: { children: React.ReactNode }) {
+function Key({ children }: { children: ReactNode }) {
   return (
     <kbd className="rounded border border-border bg-muted px-1 py-0.5 font-mono text-[10px]">
       {children}
@@ -10,7 +11,18 @@ function Key({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function ShortcutLegend({ className }: { className?: string }) {
+export type ShortcutItem = {
+  keys: ReactNode;
+  label: string;
+};
+
+export function ShortcutLegend({
+  items,
+  className,
+}: {
+  items: ShortcutItem[];
+  className?: string;
+}) {
   return (
     <p
       className={cn(
@@ -18,21 +30,18 @@ export function ShortcutLegend({ className }: { className?: string }) {
         className,
       )}
     >
-      <span>
-        <Key>Space</Key> flip
-      </span>
-      <span className="hidden sm:inline" aria-hidden>
-        ·
-      </span>
-      <span>
-        <Key>1</Key>–<Key>4</Key> rate
-      </span>
-      <span className="hidden sm:inline" aria-hidden>
-        ·
-      </span>
-      <span>
-        <Key>←</Key>/<Key>→</Key> again / easy
-      </span>
+      {items.map((item, i) => (
+        <Fragment key={i}>
+          {i > 0 && (
+            <span className="hidden sm:inline" aria-hidden>
+              ·
+            </span>
+          )}
+          <span>
+            <Key>{item.keys}</Key> {item.label}
+          </span>
+        </Fragment>
+      ))}
     </p>
   );
 }

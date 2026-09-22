@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { rateReviewCard } from "@/app/(app)/review/actions";
-import { FlashCard } from "@/components/review/flash-card";
+import { FlashCard } from "@/components/flashcards/flash-card";
 import { SessionHeader } from "@/components/review/session-header";
 import { ShortcutLegend } from "@/components/review/shortcut-legend";
 import {
@@ -118,6 +118,12 @@ export function ReviewSession({ queue }: { queue: ReviewCard[] }) {
         card={card}
         index={index}
         total={total}
+        languageLabel={
+          card.levelCode
+            ? `${card.languageName} · ${card.levelCode}`
+            : card.languageName
+        }
+        languageCode={card.languageCode}
         flipped={revealed}
         onFlip={toggleFlip}
         disabled={pending}
@@ -125,7 +131,13 @@ export function ReviewSession({ queue }: { queue: ReviewCard[] }) {
         onRate={handleRate}
       />
 
-      <ShortcutLegend />
+      <ShortcutLegend
+        items={[
+          { keys: "Space", label: "flip" },
+          { keys: "1–4", label: "rate" },
+          { keys: "←/→", label: "again / easy" },
+        ]}
+      />
     </div>
   );
 }

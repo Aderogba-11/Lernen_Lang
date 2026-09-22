@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +13,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { FlashCard } from "@/components/flashcards/flash-card";
+import { ShortcutLegend } from "@/components/review/shortcut-legend";
 import { completeLessonAction, rateFlashcardAction, scoreListeningAction, scoreReadingAction, scoreSpeakingAction, scoreWritingAction } from "./actions";
 import { RATINGS, type Rating } from "@/lib/ratings";
 import type { LessonSession, SessionListening, SessionReading, SessionSpeaking, SessionWriting } from "@/lib/sessions";
@@ -147,6 +149,51 @@ export function SessionClient({
     const good = counts.GOOD + counts.EASY;
     return total === 0 ? 0 : Math.round((good / total) * 100);
   }, [counts, total]);
+
+  function toggleFlip() {
+    if (pending) return;
+    setRevealed((prev) => !prev);
+  }
+
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if (phase !== "cards" || finished || pending || !card) return;
+      const target = e.target as HTMLElement | null;
+      if (
+        target?.closest?.("button, a, input, textarea, select") ||
+        target?.isContentEditable
+      ) {
+        return;
+      }
+      if (e.code === "Space") {
+        e.preventDefault();
+        setRevealed((prev) => !prev);
+        return;
+      }
+      if (!revealed) return;
+      if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        handleRate("AGAIN");
+        return;
+      }
+      if (e.key === "ArrowRight") {
+        e.preventDefault();
+        handleRate("EASY");
+        return;
+      }
+      const byKey: Record<string, Rating> = {
+        "1": "AGAIN",
+        "2": "HARD",
+        "3": "GOOD",
+        "4": "EASY",
+      };
+      const rating = byKey[e.key];
+      if (rating) handleRate(rating);
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, finished, pending, revealed, index, card]);
 
   function nextPhaseAfterCards() {
     if (session.writings.length > 0) return "writing" as const;
@@ -367,72 +414,41 @@ export function SessionClient({
   }
 
   return (
-    <Card className="w-full max-w-md animate-card-in">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardDescription>
-            Module {session.moduleOrder} · Lesson {session.lessonOrder}
-          </CardDescription>
-          <span className="text-sm font-medium text-muted-foreground">
-            Card {index + 1} / {total}
-          </span>
-        </div>
-        <Progress value={(index / total) * 100} />
-      </CardHeader>
-      <CardContent className="flex flex-col items-center gap-6">
-        <div className="flex min-h-48 w-full flex-col items-center justify-center gap-4 rounded-xl border border-border bg-muted/30 p-6 text-center transition-shadow">
-          <p className="text-3xl font-semibold tracking-tight">{card.targetText}</p>
-          {revealed ? (
-            <div className="flex animate-flash-reveal flex-col gap-1 text-sm">
-              <p className="text-muted-foreground">{card.translation}</p>
-              {card.pronunciation && (
-                <p className="text-muted-foreground/70">[{card.pronunciation}]</p>
-              )}
-              {card.partOfSpeech && (
-                <p className="text-xs uppercase tracking-wide text-muted-foreground/70">
-                  {card.partOfSpeech}
-                </p>
-              )}
-              {card.exampleSentence && (
-                <p className="mt-2 italic text-foreground/80">“{card.exampleSentence}”</p>
-              )}
-              {card.exampleTranslation && (
-                <p className="text-xs text-muted-foreground">{card.exampleTranslation}</p>
-              )}
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">Tap reveal to see the meaning</p>
-          )}
-        </div>
-
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => playCardAudio(card.targetText, card.audioUrl, session.languageCode)}
-        >
-          Play audio
-        </Button>
-
-        {revealed ? (
-          <div className="grid w-full grid-cols-2 gap-2 sm:grid-cols-4">
-            {RATINGS.map((rating) => (
-              <Button
-                key={rating}
-                variant={rating === "GOOD" ? "default" : "outline"}
-                disabled={pending}
-                onClick={() => handleRate(rating)}
-              >
-                {RATING_LABELS[rating]}
-              </Button>
-            ))}
-          </div>
-        ) : (
-          <Button className="w-full" onClick={() => setRevealed(true)}>
-            Reveal answer
-          </Button>
-        )}
-      </CardContent>
-    </Card>
+    <div className="flex w-full max-w-md animate-card-in flex-col gap-4">
+      <div className="flex items-center justify-between">
+        <CardDescription>
+          Module {session.moduleOrder} · Lesson {session.lessonOrder}
+        </CardDescription>
+        <span className="text-sm font-medium text-muted-foreground">
+          Card {index + 1} / {total}
+        </span>
+      </div>
+      <Progress value={(index / total) * 100} />
+      <FlashCard
+        key={card.id}
+        card={card}
+        index={index}
+        total={total}
+        languageLabel={
+          session.levelCode
+            ? `${session.languageName} · ${session.levelCode}`
+            : session.languageName
+        }
+        languageCode={session.languageCode}
+        flipped={revealed}
+        onFlip={toggleFlip}
+        disabled={pending}
+        pending={pending}
+        onRate={handleRate}
+      />
+      <ShortcutLegend
+        items={[
+          { keys: "Space", label: "flip" },
+          { keys: "1–4", label: "rate" },
+          { keys: "←/→", label: "again / easy" },
+        ]}
+      />
+    </div>
   );
 }
 
@@ -468,6 +484,18 @@ function WritingStep({
       }
     });
   }
+
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if (!result) return;
+      if (e.key === "Enter" || e.code === "Space") {
+        e.preventDefault();
+        onDone();
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [result, onDone]);
 
   return (
     <Card className="w-full max-w-2xl animate-card-in">
@@ -525,6 +553,10 @@ function WritingStep({
           </Button>
         )}
       </CardContent>
+      <ShortcutLegend
+        items={[{ keys: "Enter", label: result ? "continue" : "check" }]}
+        className="pb-5"
+      />
     </Card>
   );
 }
@@ -583,6 +615,18 @@ function SpeakingStep({
       setListening(false);
     }
   }
+
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if (!result) return;
+      if (e.key === "Enter" || e.code === "Space") {
+        e.preventDefault();
+        onDone();
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [result, onDone]);
 
   return (
     <Card className="w-full max-w-2xl animate-card-in">
@@ -656,6 +700,12 @@ function SpeakingStep({
           </div>
         )}
       </CardContent>
+      <ShortcutLegend
+        items={[
+          { keys: "Enter", label: result ? "finish" : "submit" },
+        ]}
+        className="pb-5"
+      />
     </Card>
   );
 }
@@ -685,6 +735,45 @@ function ReadingStep({
       }
     });
   }
+
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      const target = e.target as HTMLElement | null;
+      if (
+        target?.closest?.("button, a, input, textarea, select") ||
+        target?.isContentEditable
+      ) {
+        return;
+      }
+      if (mcq.result) {
+        if (e.key === "Enter" || e.code === "Space") {
+          e.preventDefault();
+          onDone();
+        }
+        return;
+      }
+      if (mcq.submitting) return;
+      if (e.key === "Enter") {
+        if (mcq.allAnswered) {
+          e.preventDefault();
+          handleSubmit();
+        }
+        return;
+      }
+      const optionCount = reading.questions[0]?.options.length ?? 0;
+      const n = Number(e.key);
+      if (Number.isInteger(n) && n >= 1 && n <= optionCount) {
+        e.preventDefault();
+        const qIndex = mcq.selections.findIndex((s) => s < 0);
+        if (qIndex >= 0 && qIndex < mcq.selections.length) {
+          mcq.select(qIndex, n - 1);
+        }
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mcq.selections, mcq.result, mcq.submitting, mcq.allAnswered, reading, onDone]);
 
   return (
     <Card className="w-full max-w-2xl animate-card-in">
@@ -731,6 +820,13 @@ function ReadingStep({
           </Button>
         )}
       </CardContent>
+      <ShortcutLegend
+        items={[
+          { keys: "1–4", label: "select option" },
+          { keys: "Enter", label: mcq.result ? "continue" : "check" },
+        ]}
+        className="pb-5"
+      />
     </Card>
   );
 }
@@ -761,6 +857,45 @@ function ListeningStep({
       }
     });
   }
+
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      const target = e.target as HTMLElement | null;
+      if (
+        target?.closest?.("button, a, input, textarea, select") ||
+        target?.isContentEditable
+      ) {
+        return;
+      }
+      if (mcq.result) {
+        if (e.key === "Enter" || e.code === "Space") {
+          e.preventDefault();
+          onDone();
+        }
+        return;
+      }
+      if (mcq.submitting) return;
+      if (e.key === "Enter") {
+        if (mcq.allAnswered) {
+          e.preventDefault();
+          handleSubmit();
+        }
+        return;
+      }
+      const optionCount = listening.questions[0]?.options.length ?? 0;
+      const n = Number(e.key);
+      if (Number.isInteger(n) && n >= 1 && n <= optionCount) {
+        e.preventDefault();
+        const qIndex = mcq.selections.findIndex((s) => s < 0);
+        if (qIndex >= 0 && qIndex < mcq.selections.length) {
+          mcq.select(qIndex, n - 1);
+        }
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mcq.selections, mcq.result, mcq.submitting, mcq.allAnswered, listening, onDone]);
 
   return (
     <Card className="w-full max-w-2xl animate-card-in">
@@ -822,6 +957,13 @@ function ListeningStep({
           </Button>
         )}
       </CardContent>
+      <ShortcutLegend
+        items={[
+          { keys: "1–4", label: "select option" },
+          { keys: "Enter", label: mcq.result ? "finish" : "check" },
+        ]}
+        className="pb-5"
+      />
     </Card>
   );
 }

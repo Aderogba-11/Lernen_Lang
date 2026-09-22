@@ -6,8 +6,18 @@ import { AudioButton } from "@/components/review/audio-button";
 import { FlipCard } from "@/components/review/flip-card";
 import { RATINGS, type Rating } from "@/lib/ratings";
 import { usePronunciation, type AudioStatus } from "@/lib/speech";
-import type { ReviewCard } from "@/lib/review";
 import { cn } from "@/lib/utils";
+
+export type FlashCardData = {
+  id: string;
+  targetText: string;
+  translation: string;
+  pronunciation: string | null;
+  exampleSentence: string | null;
+  exampleTranslation: string | null;
+  partOfSpeech: string | null;
+  audioUrl: string | null;
+};
 
 const RATING_LABELS: Record<Rating, string> = {
   AGAIN: "Again",
@@ -31,25 +41,23 @@ const RATING_BUTTON_STYLES: Record<Rating, string> = {
 };
 
 function FrontFace({
-  card,
+  languageLabel,
+  targetText,
   audioStatus,
   onPlayAudio,
 }: {
-  card: ReviewCard;
+  languageLabel: string;
+  targetText: string;
   audioStatus: AudioStatus;
   onPlayAudio: () => void;
 }) {
-  const languageLabel = card.levelCode
-    ? `${card.languageName} · ${card.levelCode}`
-    : card.languageName;
-
   return (
     <div className="flex h-full w-full flex-col items-center justify-center gap-4 p-6 text-center">
       <Badge variant="outline" className="px-2.5 py-1 text-xs">
         {languageLabel}
       </Badge>
 
-      <p className="text-3xl font-semibold tracking-tight">{card.targetText}</p>
+      <p className="text-3xl font-semibold tracking-tight">{targetText}</p>
 
       <AudioButton status={audioStatus} onPlay={onPlayAudio} />
 
@@ -69,7 +77,7 @@ function BackFace({
   pending,
   onRate,
 }: {
-  card: ReviewCard;
+  card: FlashCardData;
   pending: boolean;
   onRate: (rating: Rating) => void;
 }) {
@@ -136,29 +144,27 @@ export function FlashCard({
   card,
   index,
   total,
+  languageLabel,
+  languageCode,
   flipped,
   onFlip,
   disabled = false,
   pending,
   onRate,
 }: {
-  card: ReviewCard;
+  card: FlashCardData;
   index: number;
   total: number;
+  languageLabel: string;
+  languageCode: string;
   flipped: boolean;
   onFlip: () => void;
   disabled?: boolean;
   pending: boolean;
   onRate: (rating: Rating) => void;
 }) {
-  const audio = usePronunciation(
-    card.targetText,
-    card.languageCode,
-    card.audioUrl,
-  );
-  const faceClassName = cn(
-    "rounded-2xl border border-border bg-card shadow-sm",
-  );
+  const audio = usePronunciation(card.targetText, languageCode, card.audioUrl);
+  const faceClassName = cn("rounded-2xl border border-border bg-card shadow-sm");
   return (
     <FlipCard
       flipped={flipped}
@@ -172,7 +178,8 @@ export function FlashCard({
       backClassName={faceClassName}
       front={
         <FrontFace
-          card={card}
+          languageLabel={languageLabel}
+          targetText={card.targetText}
           audioStatus={audio.status}
           onPlayAudio={audio.play}
         />
