@@ -414,7 +414,7 @@ export function SessionClient({
   }
 
   return (
-    <div className="flex w-full max-w-md animate-card-in flex-col gap-4">
+    <div className="flex w-full max-w-md animate-card-in flex-1 flex-col gap-4">
       <div className="flex items-center justify-between">
         <CardDescription>
           Module {session.moduleOrder} · Lesson {session.lessonOrder}
@@ -442,6 +442,7 @@ export function SessionClient({
         onRate={handleRate}
       />
       <ShortcutLegend
+        footer
         items={[
           { keys: "Space", label: "flip" },
           { keys: "1–4", label: "rate" },

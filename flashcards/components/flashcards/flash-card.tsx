@@ -26,13 +26,6 @@ const RATING_LABELS: Record<Rating, string> = {
   EASY: "Easy",
 };
 
-const RATING_KEY_LABELS: Record<Rating, string> = {
-  AGAIN: "1",
-  HARD: "2",
-  GOOD: "3",
-  EASY: "4",
-};
-
 const RATING_BUTTON_STYLES: Record<Rating, string> = {
   AGAIN: "outline-ring hover:border-destructive/60 hover:text-destructive",
   HARD: "outline",
@@ -126,12 +119,7 @@ function BackFace({
               disabled={pending}
               onClick={() => onRate(rating)}
             >
-              <span className="flex flex-col leading-tight">
-                <span>{RATING_LABELS[rating]}</span>
-                <span className="text-[10px] font-normal text-muted-foreground">
-                  {RATING_KEY_LABELS[rating]}
-                </span>
-              </span>
+              {RATING_LABELS[rating]}
             </Button>
           );
         })}

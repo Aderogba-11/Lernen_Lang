@@ -110,7 +110,7 @@ export function ReviewSession({ queue }: { queue: ReviewCard[] }) {
   }
 
   return (
-    <div className="flex w-full max-w-md flex-col gap-4">
+    <div className="flex w-full max-w-md flex-1 flex-col gap-4">
       <SessionHeader index={index} total={total} />
 
       <FlashCard
@@ -132,6 +132,7 @@ export function ReviewSession({ queue }: { queue: ReviewCard[] }) {
       />
 
       <ShortcutLegend
+        footer
         items={[
           { keys: "Space", label: "flip" },
           { keys: "1–4", label: "rate" },
