@@ -923,7 +923,7 @@ async function main() {
           audioUrl: `/audio/es/speaking/${speaking.slug}.mp3`,
         };
         await db.exercise.upsert({
-          where: { lessonId_order: { lessonId: lessonRow.id, order: 5 } },
+          where: { lessonId_order: { lessonId: lessonRow.id, order: 4 } },
           update: {
             type: "SPEAKING",
             prompt: "Speak: repeat the sentence aloud",
@@ -932,7 +932,7 @@ async function main() {
           },
           create: {
             lessonId: lessonRow.id,
-            order: 5,
+            order: 4,
             type: "SPEAKING",
             prompt: "Speak: repeat the sentence aloud",
             content: speakingContent,
@@ -941,6 +941,12 @@ async function main() {
         });
       }
     }
+
+    // Reconcile stale skill rows left behind by earlier seed versions
+    // (skills are authored at order 4 only; anything beyond is orphaned).
+    await db.exercise.deleteMany({
+      where: { lessonId: lessonRow.id, order: { gt: 4 } },
+    });
   }
   }
 

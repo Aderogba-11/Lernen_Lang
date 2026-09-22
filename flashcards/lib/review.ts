@@ -9,10 +9,26 @@ export type ReviewCard = {
   translation: string;
   pronunciation: string | null;
   exampleSentence: string | null;
+  exampleTranslation: string | null;
+  partOfSpeech: string | null;
   audioUrl: string | null;
   state: string;
   progressId: string | null;
   languageCode: string;
+  languageName: string;
+  levelCode: string | null;
+};
+
+type FlashcardRow = {
+  id: string;
+  targetText: string;
+  translation: string;
+  pronunciation: string | null;
+  exampleSentence: string | null;
+  exampleTranslation: string | null;
+  partOfSpeech: string | null;
+  audioUrl: string | null;
+  progress?: { id: string; state: string; dueAt: Date | null; reviewCount: number; lastReviewedAt: Date | null }[];
 };
 
 export async function getReviewQueue(
@@ -25,9 +41,11 @@ export async function getReviewQueue(
         select: {
           id: true,
           code: true,
+          name: true,
           courses: {
             select: {
               id: true,
+              level: { select: { code: true } },
               modules: {
                 select: {
                   lessons: {
@@ -66,6 +84,29 @@ export async function getReviewQueue(
     return [];
   }
 
+  const languageName = enrollment.language.name;
+  const levelCode = course.level?.code ?? null;
+
+  const toReviewCard = (
+    card: FlashcardRow,
+    state: string,
+    progressId: string | null,
+  ): ReviewCard => ({
+    id: card.id,
+    targetText: card.targetText,
+    translation: card.translation,
+    pronunciation: card.pronunciation,
+    exampleSentence: card.exampleSentence,
+    exampleTranslation: card.exampleTranslation,
+    partOfSpeech: card.partOfSpeech,
+    audioUrl: card.audioUrl,
+    state,
+    progressId,
+    languageCode: enrollment!.language.code,
+    languageName,
+    levelCode,
+  });
+
   const cards = await db.flashcard.findMany({
     where: {
       lessonId: { in: [...completedIds] },
@@ -77,6 +118,8 @@ export async function getReviewQueue(
       translation: true,
       pronunciation: true,
       exampleSentence: true,
+      exampleTranslation: true,
+      partOfSpeech: true,
       audioUrl: true,
       progress: {
         where: { userId },
@@ -101,48 +144,13 @@ export async function getReviewQueue(
   for (const card of cards) {
     const progress = card.progress[0] ?? null;
 
-    if (!progress) {
-      newCards.push({
-        id: card.id,
-        targetText: card.targetText,
-        translation: card.translation,
-        pronunciation: card.pronunciation,
-        exampleSentence: card.exampleSentence,
-        audioUrl: card.audioUrl,
-        state: "NEW",
-        progressId: null,
-        languageCode: enrollment!.language.code,
-      });
-      continue;
-    }
-
-    if (progress.state === "NEW") {
-      newCards.push({
-        id: card.id,
-        targetText: card.targetText,
-        translation: card.translation,
-        pronunciation: card.pronunciation,
-        exampleSentence: card.exampleSentence,
-        audioUrl: card.audioUrl,
-        state: "NEW",
-        progressId: progress.id,
-        languageCode: enrollment!.language.code,
-      });
+    if (!progress || progress.state === "NEW") {
+      newCards.push(toReviewCard(card, "NEW", progress?.id ?? null));
       continue;
     }
 
     if (progress.dueAt && progress.dueAt <= now) {
-      due.push({
-        id: card.id,
-        targetText: card.targetText,
-        translation: card.translation,
-        pronunciation: card.pronunciation,
-        exampleSentence: card.exampleSentence,
-        audioUrl: card.audioUrl,
-        state: progress.state,
-        progressId: progress.id,
-        languageCode: enrollment!.language.code,
-      });
+      due.push(toReviewCard(card, progress.state, progress.id));
     }
   }
 
