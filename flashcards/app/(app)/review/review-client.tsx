@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { rateReviewCard } from "@/app/(app)/review/actions";
 import { RATINGS, type Rating } from "@/lib/ratings";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,16 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { FlipCard } from "@/components/review/flip-card";
+import { Loader2, LogOut, Volume2 } from "lucide-react";
 import type { ReviewCard } from "@/lib/review";
+
+const RATING_KEY_LABELS: Record<Rating, string> = {
+  AGAIN: "1",
+  HARD: "2",
+  GOOD: "3",
+  EASY: "4",
+};
 
 const RATING_LABELS: Record<Rating, string> = {
   AGAIN: "Again",
